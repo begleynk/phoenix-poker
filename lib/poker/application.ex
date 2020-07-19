@@ -9,6 +9,8 @@ defmodule Poker.Application do
     children = [
       # Start the Ecto repository
       Poker.Repo,
+      # Start the Lobby
+      Poker.Lobby,
       # Start the Telemetry supervisor
       PokerWeb.Telemetry,
       # Start the PubSub system

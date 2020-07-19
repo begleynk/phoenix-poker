@@ -1,7 +1,7 @@
 defmodule Poker.Table do
   use GenServer
 
-  defstruct [:name, seats: [nil,nil,nil,nil,nil,nil]]
+  defstruct [:name, seats: [nil, nil, nil, nil, nil, nil]]
 
   def start_link(name) do
     GenServer.start_link(__MODULE__, name, name: {:global, {:table, name}})
@@ -25,23 +25,23 @@ defmodule Poker.Table do
 
   @impl true
   def init(name) do
-    state = %Poker.Table { name: name }
+    state = %Poker.Table{name: name}
 
     {:ok, state}
   end
 
   @impl true
-  def handle_call(:state, _from, %Poker.Table { } = state) do
+  def handle_call(:state, _from, %Poker.Table{} = state) do
     {:reply, state, state}
   end
 
   @impl true
-  def handle_call(:name, _from, %Poker.Table { name: name } = state) do
+  def handle_call(:name, _from, %Poker.Table{name: name} = state) do
     {:reply, name, state}
   end
 
   @impl true
-  def handle_call(:seats, _from, %Poker.Table { seats: seats } = state) do
+  def handle_call(:seats, _from, %Poker.Table{seats: seats} = state) do
     {:reply, seats, state}
   end
 end

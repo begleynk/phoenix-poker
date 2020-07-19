@@ -13,9 +13,13 @@ defmodule Poker.TableTest do
     {:ok, pid} = Poker.Table.start_link(name)
 
     assert Poker.Table.seats(pid) == [
-      nil,nil,nil,
-      nil,nil,nil,
-    ]
+             nil,
+             nil,
+             nil,
+             nil,
+             nil,
+             nil
+           ]
   end
 
   test "it can give a copy of its state" do
@@ -24,12 +28,16 @@ defmodule Poker.TableTest do
 
     state = Poker.Table.state(pid)
 
-    assert %Poker.Table {
-      name: ^name, 
-      seats: [
-        nil,nil,nil,
-        nil,nil,nil,
-      ]
-    } = state
+    assert %Poker.Table{
+             name: ^name,
+             seats: [
+               nil,
+               nil,
+               nil,
+               nil,
+               nil,
+               nil
+             ]
+           } = state
   end
 end

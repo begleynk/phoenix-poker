@@ -20,7 +20,7 @@ defmodule Poker.MixProject do
   def application do
     [
       mod: {Poker.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :os_mon]
     ]
   end
 

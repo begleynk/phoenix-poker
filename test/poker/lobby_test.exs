@@ -1,18 +1,17 @@
 defmodule Poker.LobbyTest do
   use ExUnit.Case
 
-  test "starts with no rooms" do
-    assert {:ok, _} = Poker.Lobby.start_link([])
+  test "can be used to start tables" do
+    assert {:ok, pid} = Poker.Lobby.create_table("my table")
 
-    assert Poker.Lobby.rooms() == []
+    assert Enum.member?(Poker.Lobby.tables(), pid)
+    assert ^pid = Poker.Table.whereis("my table")
   end
 
-  test "can be used to start rooms" do
-    {:ok, _} = Poker.Lobby.start_link([])
+  test "broadcasting on table creation" do
+    Poker.Lobby.subscribe
 
-    assert {:ok, pid} = Poker.Lobby.create_room("my room")
-
-    assert [^pid] = Poker.Lobby.rooms()
-    assert ^pid = Poker.Table.whereis("my room")
+    assert {:ok, pid} = Poker.Lobby.create_table("das table")
+    assert_receive {:created, %Poker.Table{ name: "das table"}}
   end
 end
