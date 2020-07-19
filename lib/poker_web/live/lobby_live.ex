@@ -26,7 +26,11 @@ defmodule PokerWeb.LobbyLive do
     </form>
 
     <%= for t <- @tables do %>
-      <h2><%= t.name %></h2>
+      <h2>
+        <%= t.name %>
+        <%= link "Join", to: Routes.table_path(@socket, :show, t.name) %>
+      </h2>
+      <p>Players: <%= Enum.count(t.seats, &(&1)) %>/ <%= length(t.seats) %></p>
     <% end %>
     """
   end

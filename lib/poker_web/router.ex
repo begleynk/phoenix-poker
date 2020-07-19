@@ -18,6 +18,7 @@ defmodule PokerWeb.Router do
     pipe_through :browser
 
     live "/", LobbyLive, :index
+    live "/table/:name", TableLive, :show
   end
 
   # Other scopes may use custom stacks.
