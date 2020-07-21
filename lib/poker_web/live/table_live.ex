@@ -4,7 +4,8 @@ defmodule PokerWeb.TableLive do
   def mount(params, _session, socket) do
     pid = Poker.Table.whereis(params["name"])
 
-    socket = socket
+    socket =
+      socket
       |> assign(:pid, pid)
       |> assign(:this, Poker.Table.state(pid))
 

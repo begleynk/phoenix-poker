@@ -9,9 +9,9 @@ defmodule Poker.LobbyTest do
   end
 
   test "broadcasting on table creation" do
-    Poker.Lobby.subscribe
+    Poker.Lobby.subscribe()
 
     assert {:ok, pid} = Poker.Lobby.create_table("das table")
-    assert_receive {:created, %Poker.Table{ name: "das table"}}
+    assert_receive {:created, %Poker.Table{name: "das table"}}
   end
 end

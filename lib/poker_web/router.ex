@@ -10,6 +10,10 @@ defmodule PokerWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :authenticated do
+    plug PokerWeb.Plugs.CurrentUser
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -17,8 +21,12 @@ defmodule PokerWeb.Router do
   scope "/", PokerWeb do
     pipe_through :browser
 
+    resources "/registrations", RegistrationsController, only: [:new, :create]
+
+    pipe_through :authenticated
+
     live "/", LobbyLive, :index
-    live "/table/:name", TableLive, :show
+    live "/tables/:name", TableLive, :show
   end
 
   # Other scopes may use custom stacks.

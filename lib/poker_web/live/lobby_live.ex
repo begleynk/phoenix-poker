@@ -1,11 +1,15 @@
 defmodule PokerWeb.LobbyLive do
   use PokerWeb, :live_view
 
-  @impl true
-  def mount(_params, _session, socket) do
-    if socket.connected?, do: Poker.Lobby.subscribe
+  alias Poker.Account
 
-    socket = socket
+  @impl true
+  def mount(params, %{"user_id" => id}, socket) do
+    if socket.connected?, do: Poker.Lobby.subscribe()
+
+    socket =
+      socket
+      |> assign(user: Account.get_user!(id))
       |> assign(tables: Poker.Lobby.table_states())
       |> assign(table_name: "")
 
@@ -15,8 +19,9 @@ defmodule PokerWeb.LobbyLive do
   @impl true
   def render(assigns) do
     ~L"""
+    <p>Playing as <strong><%= @user.name %></strong>. You have <strong><%= @user.chips %></strong> chips remaning.</p>
+    <hr />
     <h1>Tables</h1>
-    </hr>
 
     <%= f = form_for :table, "#", [phx_submit: :create_table, id: :create_table] %>
       <%= label f, :name %>

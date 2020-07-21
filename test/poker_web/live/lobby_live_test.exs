@@ -17,9 +17,9 @@ defmodule PokerWeb.LobbyLiveTest do
     {:ok, view, _html} = live(conn)
 
     view
-    |> form("#create_table", table: %{ name: "New Table" })
+    |> form("#create_table", table: %{name: "New Table"})
     |> render_submit()
 
-     assert render(view) =~ "New Table"
+    assert render(view) =~ "New Table"
   end
 end

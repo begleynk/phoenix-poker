@@ -1,0 +1,8 @@
+
+<%= f = form_for @changeset, Routes.registrations_path(@conn, :create) %>
+  <%= label f, "Your Name" %>
+  <%= text_input f, :name %>
+  <%= error_tag f, :name %>
+
+  <%= submit "Set Name" %>
+</form>
