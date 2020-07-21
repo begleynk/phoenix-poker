@@ -11,11 +11,11 @@ defmodule PokerWeb.Plugs.CurrentUserTest do
     conn = connection() |> PokerWeb.Plugs.CurrentUser.call(%{})
 
     assert conn.assigns[:current_user] == nil
-    assert redirected_to(conn) ==  Routes.registrations_path(conn, :new)
+    assert redirected_to(conn) == Routes.registrations_path(conn, :new)
   end
 
   test "it finds the user if the user ID is set" do
-    {:ok, user} = Account.create_user(%{name: "Gus" })
+    {:ok, user} = Account.create_user(%{name: "Gus"})
 
     conn =
       connection(user_id: user.id)
@@ -26,7 +26,7 @@ defmodule PokerWeb.Plugs.CurrentUserTest do
 
   test "deletes the user_id key if the specified user does not exist" do
     conn =
-      connection(user_id: 9919819323)
+      connection(user_id: 9_919_819_323)
       |> PokerWeb.Plugs.CurrentUser.call(%{})
 
     assert conn.assigns[:user_id] == nil

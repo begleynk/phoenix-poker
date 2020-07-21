@@ -10,24 +10,21 @@ defmodule PokerWeb.Plugs.CurrentUser do
   end
 
   def call(conn, _) do
-    case user_session(conn) do
-      {:ok, user} ->
+    case signed_in_user(conn) do
+      %User{} = user ->
         conn |> assign_user(user)
-      {:error, _} ->
+
+      nil ->
         conn
         |> clear_session
         |> redirect(to: Routes.registrations_path(conn, :new))
+        |> halt
     end
   end
 
-  def user_session(conn) do
+  def signed_in_user(conn) do
     if id = get_session(conn, :user_id) do
-      case Account.get_user(id) do
-        %User{} = user -> {:ok, user}
-        nil -> {:error, nil}
-      end
-    else
-      {:error, nil}
+      Account.get_user(id)
     end
   end
 

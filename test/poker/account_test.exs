@@ -75,5 +75,25 @@ defmodule Poker.AccountTest do
     test "chips default to 10000" do
       assert {:ok, %User{chips: 10000, name: "chips"}} = Account.create_user(%{name: "chips"})
     end
+
+    test "fetches the balance for a user" do
+      {:ok, user} = Account.create_user(%{name: "chips fetch", chips: 1234})
+
+      assert Account.balance(user.id) == 1234
+    end
+
+    test "subtracts from the balance of a user" do
+      {:ok, user} = Account.create_user(%{name: "chips fetch", chips: 10000})
+
+      assert :ok = Account.subtract_balance(user.id, 1000)
+      assert Account.balance(user.id) == 9000
+    end
+
+    test "adds to the balance of a user" do
+      {:ok, user} = Account.create_user(%{name: "chips fetch", chips: 10000})
+
+      assert :ok = Account.add_balance(user.id, 1000)
+      assert Account.balance(user.id) == 11000
+    end
   end
 end

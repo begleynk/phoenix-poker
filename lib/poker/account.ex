@@ -115,4 +115,63 @@ defmodule Poker.Account do
   def change_user(%User{} = user, attrs \\ %{}) do
     User.changeset(user, attrs)
   end
+
+  @doc """
+  Returns the account balance for the user.
+
+  ## Examples
+
+      iex> balance(user_id)
+      10000
+
+  """
+  def balance(id) do
+    Repo.one(
+      from u in User,
+      select: u.chips,
+      where: u.id == ^id 
+    )
+  end
+
+  @doc """
+  Subtracts from the account balance for the user.
+
+  ## Examples
+
+      iex> balance(user_id)
+      10000
+
+  """
+  def subtract_balance(%User{} = user, amount), do: subtract_balance(user.id, amount)
+  def subtract_balance(id, amount) do
+    {1, _} = Repo.update_all(
+      (from u in User,
+      where: u.id == ^id,
+        update: [set: [chips: u.chips - ^amount]]),
+      []
+    )
+
+    :ok
+  end
+
+  @doc """
+  Adds chips to the account balance for the user.
+
+  ## Examples
+
+      iex> balance(user_id)
+      10000
+
+  """
+  def add_balance(%User{} = user, amount), do: add_balance(user.id, amount)
+  def add_balance(id, amount) do
+    {1, _} = Repo.update_all(
+      (from u in User,
+      where: u.id == ^id,
+        update: [set: [chips: u.chips + ^amount]]),
+      []
+    )
+
+    :ok
+  end
 end

@@ -1,7 +1,13 @@
 defmodule Poker.Table do
   use GenServer
 
-  defstruct [:name, seats: [nil, nil, nil, nil, nil, nil]]
+  alias Poker.Account
+  alias Poker.Account.User
+
+  defstruct [
+    :name,
+    seats: %{1 => nil, 2 => nil, 3 => nil, 4 => nil, 5 => nil, 6 => nil},
+  ]
 
   def start_link(name) do
     GenServer.start_link(__MODULE__, name, name: {:global, {:table, name}})
@@ -9,6 +15,10 @@ defmodule Poker.Table do
 
   def whereis(name) do
     :global.whereis_name({:table, name})
+  end
+
+  def subscribe(pid) do
+    Phoenix.PubSub.subscribe(Poker.PubSub, "table_" <> name(pid))
   end
 
   def state(pid) do
@@ -21,6 +31,14 @@ defmodule Poker.Table do
 
   def seats(pid) do
     GenServer.call(pid, :seats)
+  end
+
+  def sit(pid, %User{} = user, index: index, amount: amount) do
+    GenServer.call(pid, {:sit, user, index, amount})
+  end
+
+  def leave(pid, index) do
+    GenServer.call(pid, {:leave, index})
   end
 
   @impl true
@@ -43,5 +61,38 @@ defmodule Poker.Table do
   @impl true
   def handle_call(:seats, _from, %Poker.Table{seats: seats} = state) do
     {:reply, seats, state}
+  end
+
+  @impl true
+  def handle_call({:sit, user, index, amount}, _from, %Poker.Table{seats: seats} = state) do
+    seats = Map.put(seats, index, [user_id: user.id, name: user.name, chips: amount])
+
+    :ok = Account.subtract_balance(user, amount)
+
+    {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast}
+  end
+
+  @impl true
+  def handle_call({:leave, user}, _from, %Poker.Table{seats: seats} = state) do
+    index = state |> position_of(user)
+    [user_id: _, name: _, chips: remaining_chips] = Map.get(seats, index)
+
+    seats = Map.put(seats, index, nil)
+
+    :ok = Account.add_balance(user, remaining_chips)
+
+    {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast}
+  end
+
+  def position_of(%Poker.Table{seats: seats}, %User{id: id}) do
+    case Enum.find(seats, fn {_pos, seat} -> seat[:user_id] == id end) do
+      nil -> nil
+      {matching_pos, _} -> matching_pos
+    end
+  end
+
+  def broadcast(state) do
+    Phoenix.PubSub.broadcast(Poker.PubSub, "table_" <> state.name, {:state_update, state})
+    state
   end
 end

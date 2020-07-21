@@ -4,7 +4,7 @@ defmodule PokerWeb.LobbyLive do
   alias Poker.Account
 
   @impl true
-  def mount(params, %{"user_id" => id}, socket) do
+  def mount(_params, %{"user_id" => id}, socket) do
     if socket.connected?, do: Poker.Lobby.subscribe()
 
     socket =
@@ -35,7 +35,7 @@ defmodule PokerWeb.LobbyLive do
         <%= t.name %>
         <%= link "Join", to: Routes.table_path(@socket, :show, t.name) %>
       </h2>
-      <p>Players: <%= Enum.count(t.seats, &(&1)) %>/ <%= length(t.seats) %></p>
+      <p>Players: <%= Enum.count(t.seats, &(&1)) %>/ <%= length(Map.keys(t.seats)) %></p>
     <% end %>
     """
   end

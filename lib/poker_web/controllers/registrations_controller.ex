@@ -4,7 +4,7 @@ defmodule PokerWeb.RegistrationsController do
   alias Poker.Account
   alias Poker.Account.User
 
-  def new(conn, params) do
+  def new(conn, _params) do
     user = Account.change_user(%User{})
     render(conn, "new.html", changeset: user)
   end
@@ -15,6 +15,7 @@ defmodule PokerWeb.RegistrationsController do
         conn
         |> put_session(:user_id, user.id)
         |> redirect(to: Routes.lobby_path(conn, :index))
+
       {:error, %Ecto.Changeset{} = changeset} ->
         render(conn, "new.html", changeset: changeset)
     end
