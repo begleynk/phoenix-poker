@@ -22,13 +22,14 @@ defmodule Poker.Lobby do
 
   # TODO: Error handling?
   def create_table(name) do
-    spec = %{id: Table, start: {Table, :start_link, [name]}, restart: :transient}
+    spec = %{id: Table, start: {Table, :start_link, [%{name: name}]}, restart: :transient}
 
-    {:ok, pid} = DynamicSupervisor.start_child(__MODULE__, spec)
-
-    Phoenix.PubSub.broadcast(Poker.PubSub, "tables", {:created, Table.state(pid)})
-
-    {:ok, pid}
+    case DynamicSupervisor.start_child(__MODULE__, spec) do
+      {:ok, pid} -> 
+        :ok = Phoenix.PubSub.broadcast(Poker.PubSub, "tables", {:created, Table.state(pid)})
+        {:ok, pid}
+      error -> error
+    end
   end
 
   def tables do

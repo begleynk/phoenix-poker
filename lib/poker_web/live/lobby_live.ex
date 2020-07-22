@@ -2,6 +2,7 @@ defmodule PokerWeb.LobbyLive do
   use PokerWeb, :live_view
 
   alias Poker.Account
+  alias Poker.Table
 
   @impl true
   def mount(_params, %{"user_id" => id}, socket) do
@@ -12,6 +13,7 @@ defmodule PokerWeb.LobbyLive do
       |> assign(user: Account.get_user!(id))
       |> assign(tables: Poker.Lobby.table_states())
       |> assign(table_name: "")
+      |> assign(changeset: Table.changeset(%Table{}))
 
     {:ok, socket}
   end
@@ -23,9 +25,10 @@ defmodule PokerWeb.LobbyLive do
     <hr />
     <h1>Tables</h1>
 
-    <%= f = form_for :table, "#", [phx_submit: :create_table, id: :create_table] %>
+    <%= f = form_for @changeset, "#", [phx_submit: :create_table, id: :create_table] %>
       <%= label f, :name %>
       <%= text_input f, :name %>
+      <%= error_tag f, :name %>
 
       <%= submit "Create Table" %>
     </form>
@@ -35,15 +38,18 @@ defmodule PokerWeb.LobbyLive do
         <%= t.name %>
         <%= link "Join", to: Routes.table_path(@socket, :show, t.name) %>
       </h2>
-      <p>Players: <%= Enum.count(t.seats, &(&1)) %>/ <%= length(Map.keys(t.seats)) %></p>
+      <p>Players: <%= Enum.count(Map.values(t.seats), &(&1 != nil)) %>/ <%= length(Map.keys(t.seats)) %></p>
     <% end %>
     """
   end
 
   @impl true
   def handle_event("create_table", %{"table" => params}, socket) do
-    Poker.Lobby.create_table(params["name"])
-    {:noreply, socket |> put_flash(:info, "Table created")}
+    case Poker.Lobby.create_table(params["name"]) do
+      {:ok, _} -> {:noreply, socket |> put_flash(:info, "Table created")}
+      {:error, changeset} -> {:noreply, socket |> assign(:changeset, changeset)}
+    end
+    
   end
 
   @impl true

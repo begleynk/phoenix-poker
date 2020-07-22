@@ -1,16 +1,34 @@
 defmodule Poker.Table do
   use GenServer
+  use Ecto.Schema
+
+  import Ecto.Changeset
 
   alias Poker.Account
   alias Poker.Account.User
 
-  defstruct [
-    :name,
-    seats: %{1 => nil, 2 => nil, 3 => nil, 4 => nil, 5 => nil, 6 => nil},
-  ]
+  embedded_schema do
+    field :name, :string
+    field :seats, :map, default: %{1 => nil, 2 => nil, 3 => nil, 4 => nil, 5 => nil, 6 => nil}
+  end
 
-  def start_link(name) do
-    GenServer.start_link(__MODULE__, name, name: {:global, {:table, name}})
+  def changeset(table, params \\ %{}) do
+    table
+    |> cast(params, [:name, :seats])
+    |> validate_required([:name])
+    |> validate_length(:name, min: 4)
+  end
+
+  def start_link(params) do
+    case %Poker.Table{} |> changeset(params) |> apply_action(:update) do
+      {:ok, table} -> GenServer.start_link(__MODULE__, table, name: {:global, {:table, table.name}})
+      {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  @impl true
+  def init(state) do
+    {:ok, state}
   end
 
   def whereis(name) do
@@ -39,13 +57,6 @@ defmodule Poker.Table do
 
   def leave(pid, index) do
     GenServer.call(pid, {:leave, index})
-  end
-
-  @impl true
-  def init(name) do
-    state = %Poker.Table{name: name}
-
-    {:ok, state}
   end
 
   @impl true
