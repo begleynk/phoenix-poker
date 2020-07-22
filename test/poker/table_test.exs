@@ -65,4 +65,19 @@ defmodule Poker.TableTest do
 
     assert Account.balance(user.id) == user.chips
   end
+
+  test "a user cannot sit at a table if they are already sitting" do
+    {:ok, user} = Account.create_user(%{name: "Joe"})
+    {:ok, pid} = Poker.Table.start_link("the_table")
+
+    assert :ok = Poker.Table.sit(pid, user, index: 0, amount: 1000)
+    assert {:error, "already seated"} = Poker.Table.sit(pid, user, index: 1, amount: 1000)
+  end
+
+  test "a user cannot buy in for more than their account balance" do
+    {:ok, user} = Account.create_user(%{name: "Joe", chips: 900})
+    {:ok, pid} = Poker.Table.start_link("the_table")
+
+    assert {:error, "not enough chips"} = Poker.Table.sit(pid, user, index: 1, amount: 1000)
+  end
 end

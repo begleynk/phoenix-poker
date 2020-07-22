@@ -125,6 +125,7 @@ defmodule Poker.Account do
       10000
 
   """
+  def balance(%User{} = user), do: balance(user.id)
   def balance(id) do
     Repo.one(
       from u in User,

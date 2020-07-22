@@ -65,33 +65,52 @@ defmodule Poker.Table do
 
   @impl true
   def handle_call({:sit, user, index, amount}, _from, %Poker.Table{seats: seats} = state) do
-    seats = Map.put(seats, index, [user_id: user.id, name: user.name, chips: amount])
+    cond do
+      player_seated(state, user) ->
+        {:reply, {:error, "already seated"}, state}
+      balance_too_low(user, amount) ->
+        {:reply, {:error, "not enough chips"}, state}
+      true ->
+        seats = Map.put(seats, index, [user_id: user.id, name: user.name, chips: amount])
 
-    :ok = Account.subtract_balance(user, amount)
+        :ok = Account.subtract_balance(user, amount)
 
-    {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast}
+        {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast}
+    end
   end
 
   @impl true
   def handle_call({:leave, user}, _from, %Poker.Table{seats: seats} = state) do
-    index = state |> position_of(user)
-    [user_id: _, name: _, chips: remaining_chips] = Map.get(seats, index)
+    if player_seated(state, user) do
+      index = state |> position_of(user)
+      [user_id: _, name: _, chips: remaining_chips] = Map.get(seats, index)
 
-    seats = Map.put(seats, index, nil)
+      seats = Map.put(seats, index, nil)
 
-    :ok = Account.add_balance(user, remaining_chips)
+      :ok = Account.add_balance(user, remaining_chips)
 
-    {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast}
+      {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast}
+    else
+      {:reply, :ok, state}
+    end
   end
 
-  def position_of(%Poker.Table{seats: seats}, %User{id: id}) do
+  defp position_of(%Poker.Table{seats: seats}, %User{id: id}) do
     case Enum.find(seats, fn {_pos, seat} -> seat[:user_id] == id end) do
       nil -> nil
       {matching_pos, _} -> matching_pos
     end
   end
 
-  def broadcast(state) do
+  defp balance_too_low(user, amount) do
+    Account.balance(user) < amount
+  end
+
+  defp player_seated(state, user) do
+    position_of(state, user) != nil
+  end
+
+  defp broadcast(state) do
     Phoenix.PubSub.broadcast(Poker.PubSub, "table_" <> state.name, {:state_update, state})
     state
   end
