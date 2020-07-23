@@ -5,12 +5,12 @@ defmodule Poker.Game do
   alias Poker.Game.Action
   alias Poker.Game.State
 
-  def start_link(%{players: _p, button: _b, name: _n} = args) do
+  def start_link(%{players: _p, name: _n} = args) do
     GenServer.start_link(__MODULE__, args, name: {:global, {:game, args.name}})
   end
 
   @impl true
-  def init(%{players: _p, button: _b, name: _n} = args) do
+  def init(%{players: _p, name: _n} = args) do
     {:ok, Game.State.new(args)}
   end
 

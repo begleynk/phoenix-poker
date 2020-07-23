@@ -1,23 +1,7 @@
 defmodule Poker.GameTest do
-  use Poker.DataCase
+  use Poker.GameCase
 
   alias Poker.Game
-  alias Poker.Account
-
-  setup config do
-    if players = config[:players] do
-      players =
-        players
-        |> Enum.map(fn {name, chips} ->
-          {:ok, user} = Account.create_user(%{name: name, chips: chips})
-          %{user_id: user.id, name: name, chips: chips}
-        end)
-
-      {:ok, players: players}
-    else
-      :ok
-    end
-  end
 
   @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
   test "the game starts with players posting blinds", %{players: players} do
@@ -25,7 +9,6 @@ defmodule Poker.GameTest do
       Game.start_link(%{
         name: "not_important",
         players: players,
-        button: 1
       })
 
     assert length(Game.deck(pid)) == 52
@@ -61,7 +44,7 @@ defmodule Poker.GameTest do
   end
 
   @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
-  test "blinds must be posted for cards to be dealt", %{players: players} do
+  test "game moves on via actions", %{players: players} do
     {:ok, pid} =
       Game.start_link(%{
         name: "not_important",
@@ -77,19 +60,14 @@ defmodule Poker.GameTest do
       assert {nil, nil} = player.cards
     end)
 
-    assert %Game.AvailableActions{
-             actions: [{:call, 5}]
-           } = Game.state(pid).available_actions
+    assert Game.state(pid).available_actions == [{:call, 5}]
 
     assert :ok = Game.handle_action(pid, Game.Action.call(amount: 5, position: 1))
 
     assert Game.pot(pid) == 0
     assert Game.bets(pid) == [0, 5, 0, 0, 0, 0]
     assert Game.position(pid) == 2
-
-    assert %Game.AvailableActions{
-             actions: [{:call, 10}]
-           } = Game.state(pid).available_actions
+    assert Game.state(pid).available_actions == [{:call, 10}]
 
     assert :ok = Game.handle_action(pid, Game.Action.call(amount: 10, position: 2))
 
@@ -100,5 +78,7 @@ defmodule Poker.GameTest do
     Enum.each(Game.players(pid), fn player ->
       assert {%Poker.Card{}, %Poker.Card{}} = player.cards
     end)
+
+    assert Game.state(pid).available_actions == [:bet, {:call, 10}, :fold]
   end
 end

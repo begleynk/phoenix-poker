@@ -4,14 +4,14 @@ defmodule Poker.Game.State do
     :players,
     :deck,
     :community_cards,
-    :phase,
     :bets,
     :pot,
-    :button,
     :stage,
     :available_actions,
+    :position,
     :actions,
-    :position
+    :phase,
+    :actions_in_phase,
   ]
 
   alias Poker.Deck
@@ -20,43 +20,14 @@ defmodule Poker.Game.State do
   alias Poker.Game.Phase
   alias Poker.Game.AvailableActions
 
-  def new(%{players: players, button: button, name: name}) do
-    %State{
-      players: build_players(players),
-      button: button,
-      name: name,
-      community_cards: [],
-      deck: Deck.new(),
-      pot: 0,
-      bets: [0, 0, 0, 0, 0, 0],
-      phase: :preflop,
-      position: 1,
-      actions: []
-    }
-    |> AvailableActions.compute()
-  end
-
-  defp build_players(players) do
-    Enum.map(players, fn player ->
-      %{
-        user_id: player[:user_id],
-        name: player[:name],
-        chips: player[:chips],
-        cards: {nil, nil}
-      }
-    end)
+  def new(%{players: players, name: name}) do
+    Phase.Preflop.init(%State{players: players, name: name})
   end
 
   def handle_action(%State{} = state, %Action{} = action) do
     case validate_action(state, action) do
-      :ok ->
-        {:ok,
-         state
-         |> transition(action)
-         |> AvailableActions.compute()}
-
-      error ->
-        error
+      :ok -> {:ok, state |> transition(action) }
+      error -> error
     end
   end
 
@@ -74,11 +45,19 @@ defmodule Poker.Game.State do
   end
 
   def push_action(%State{} = state, %Action{} = action) do
-    state |> Map.update!(:actions, fn actions -> [action | actions] end)
+    state
+    |> Map.update!(:actions, fn actions -> [action | actions] end)
+    |> Map.update!(:actions_in_phase, &(&1 + 1))
   end
 
   def place_bet(%State{} = state, position, amount) do
-    state |> Map.update!(:bets, fn bets -> List.update_at(bets, position, &(&1 + amount)) end)
+    state
+    |> Map.update!(:bets, fn bets -> List.update_at(bets, position, &(&1 + amount)) end)
+    |> Map.update!(:players, fn players ->
+         List.update_at(players, position, fn(player) ->
+           Map.update!(player, :chips, &(&1 - amount))
+         end)
+      end)
   end
 
   def deal_pocket_cards(%State{} = s) do
@@ -95,19 +74,20 @@ defmodule Poker.Game.State do
     end)
   end
 
-  def advance_position(%State{} = state) do
-    state |> Map.update!(:position, fn pos -> rem(pos + 1, 6) end)
+  def advance_position(%State{players: players} = state) do
+    state |> Map.update!(:position, fn pos -> rem(pos + 1, length(players)) end)
   end
 
   def transition(%State{} = state, %Action{} = action) do
     case state.phase do
       :preflop -> Phase.Preflop.transition(state, action)
+      :flop -> Phase.Flop.transition(state, action)
       _ -> raise "Unimplemented phase"
     end
   end
 
   def is_valid_action(state, action) do
-    available_actions = state.available_actions.actions
+    available_actions = state.available_actions
 
     case action.type do
       :call -> {:call, action.amount} in available_actions
@@ -123,19 +103,20 @@ defmodule Poker.Game.State do
     highest_bet(state) - Enum.at(state.bets, position)
   end
 
+  def no_bets_to_match?(state) do
+    0..(length(state.players) - 1)
+    |> Enum.all?(fn(pos) -> to_call(state, pos) == 0 end)
+  end
+
+  def all_players_have_acted?(state) do
+    no_bets_to_match?(state) && state.actions_in_phase > length(state.players)
+  end
+
   def highest_bet(state) do
     Enum.max(state.bets)
   end
 
-  def player_at(state, :small_blind) do
-    state.players
-    |> Stream.cycle()
-    |> Enum.at(state.button + 1)
-  end
-
-  def index_of(state, :small_blind) do
-    [0, 1, 2, 3, 4, 5]
-    |> Stream.cycle()
-    |> Enum.at(state.button + 1)
+  def is_all_in?(state, position) do
+    Enum.at(state.players, position).chips == 0
   end
 end
