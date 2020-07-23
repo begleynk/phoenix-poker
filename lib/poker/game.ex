@@ -22,6 +22,10 @@ defmodule Poker.Game do
     GenServer.call(pid, {:handle_action, action})
   end
 
+  def deck(pid) do
+    GenServer.call(pid, :deck)
+  end
+
   def community_cards(pid) do
     GenServer.call(pid, :community_cards)
   end
@@ -53,6 +57,11 @@ defmodule Poker.Game do
   @impl true
   def handle_call(:community_cards, _, state) do
     {:reply, state.community_cards, state}
+  end
+
+  @impl true
+  def handle_call(:deck, _, state) do
+    {:reply, state.deck, state}
   end
 
   @impl true

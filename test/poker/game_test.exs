@@ -3,7 +3,6 @@ defmodule Poker.GameTest do
 
   alias Poker.Game
   alias Poker.Account
-  # alias Poker.Account.User
 
   setup config do
     if players = config[:players] do
@@ -29,6 +28,7 @@ defmodule Poker.GameTest do
         button: 1
       })
 
+    assert length(Game.deck(pid)) == 52
     assert Game.community_cards(pid) == []
     assert Game.pot(pid) == 0
 
@@ -73,6 +73,10 @@ defmodule Poker.GameTest do
     assert Game.bets(pid) == [0, 0, 0, 0, 0, 0]
     assert Game.position(pid) == 1
 
+    Enum.each(Game.players(pid), fn player ->
+      assert {nil, nil} = player.cards
+    end)
+
     assert %Game.AvailableActions{
              actions: [{:call, 5}]
            } = Game.state(pid).available_actions
@@ -92,5 +96,9 @@ defmodule Poker.GameTest do
     assert Game.pot(pid) == 0
     assert Game.bets(pid) == [0, 5, 10, 0, 0, 0]
     assert Game.position(pid) == 3
+
+    Enum.each(Game.players(pid), fn player ->
+      assert {%Poker.Card{}, %Poker.Card{}} = player.cards
+    end)
   end
 end

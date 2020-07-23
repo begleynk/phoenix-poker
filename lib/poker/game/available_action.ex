@@ -16,7 +16,7 @@ defmodule Poker.Game.AvailableActions do
     })
   end
 
-  def compute(%State{position: position} = state) do
+  def compute(%State{} = state) do
     actions =
       %AvailableActions{actions: []}
       |> check(state)

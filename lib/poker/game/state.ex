@@ -14,6 +14,7 @@ defmodule Poker.Game.State do
     :position
   ]
 
+  alias Poker.Deck
   alias Poker.Game.State
   alias Poker.Game.Action
   alias Poker.Game.Phase
@@ -25,7 +26,7 @@ defmodule Poker.Game.State do
       button: button,
       name: name,
       community_cards: [],
-      deck: nil,
+      deck: Deck.new(),
       pot: 0,
       bets: [0, 0, 0, 0, 0, 0],
       phase: :preflop,
@@ -78,6 +79,20 @@ defmodule Poker.Game.State do
 
   def place_bet(%State{} = state, position, amount) do
     state |> Map.update!(:bets, fn bets -> List.update_at(bets, position, &(&1 + amount)) end)
+  end
+
+  def deal_pocket_cards(%State{} = s) do
+    Enum.reduce(0..5, s, fn seat, state ->
+      {:ok, [left, right], deck} = Deck.draw_cards(state.deck, 2)
+
+      state
+      |> Map.update!(:players, fn players ->
+        List.update_at(players, seat, fn player ->
+          Map.put(player, :cards, {left, right})
+        end)
+      end)
+      |> Map.put(:deck, deck)
+    end)
   end
 
   def advance_position(%State{} = state) do

@@ -22,6 +22,7 @@ defmodule Poker.Game.Phase.Preflop do
   defp handle_call(state, %Action{position: 2, type: :call, amount: 10}) do
     state
     |> State.place_bet(2, 10)
+    |> State.deal_pocket_cards()
     |> State.advance_position()
   end
 end
