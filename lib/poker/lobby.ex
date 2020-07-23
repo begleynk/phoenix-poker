@@ -25,10 +25,12 @@ defmodule Poker.Lobby do
     spec = %{id: Table, start: {Table, :start_link, [%{name: name}]}, restart: :transient}
 
     case DynamicSupervisor.start_child(__MODULE__, spec) do
-      {:ok, pid} -> 
+      {:ok, pid} ->
         :ok = Phoenix.PubSub.broadcast(Poker.PubSub, "tables", {:created, Table.state(pid)})
         {:ok, pid}
-      error -> error
+
+      error ->
+        error
     end
   end
 

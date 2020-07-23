@@ -4,34 +4,34 @@ defmodule Poker.Game.Action do
   alias Poker.Game.Action
 
   def call(amount: amount, position: pos) do
-    %Action {
+    %Action{
       type: :call,
       amount: amount,
-      position: pos,
+      position: pos
     }
   end
 
   def bet(amount: amount, position: pos) do
-    %Action {
+    %Action{
       type: :bet,
       amount: amount,
-      position: pos,
+      position: pos
     }
   end
 
   def check(position: pos) do
-    %Action {
+    %Action{
       type: :check,
       amount: 0,
-      position: pos,
+      position: pos
     }
   end
 
   def fold(position: pos) do
-    %Action {
+    %Action{
       type: :fold,
       amount: 0,
-      position: pos,
+      position: pos
     }
   end
 end

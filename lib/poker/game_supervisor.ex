@@ -4,6 +4,7 @@ defmodule Poker.GameSupervisor do
   alias Poker.Game
 
   def start_link(), do: start_link([])
+
   def start_link(_args) do
     DynamicSupervisor.start_link(__MODULE__, [], name: __MODULE__)
   end

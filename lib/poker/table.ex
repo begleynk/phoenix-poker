@@ -9,7 +9,7 @@ defmodule Poker.Table do
 
   embedded_schema do
     field :name, :string
-    field :seats, :map, default: [nil,nil,nil,nil,nil,nil]
+    field :seats, :map, default: [nil, nil, nil, nil, nil, nil]
   end
 
   def changeset(table, params \\ %{}) do
@@ -21,8 +21,11 @@ defmodule Poker.Table do
 
   def start_link(params) do
     case %Poker.Table{} |> changeset(params) |> apply_action(:update) do
-      {:ok, table} -> GenServer.start_link(__MODULE__, table, name: {:global, {:table, table.name}})
-      {:error, changeset} -> {:error, changeset}
+      {:ok, table} ->
+        GenServer.start_link(__MODULE__, table, name: {:global, {:table, table.name}})
+
+      {:error, changeset} ->
+        {:error, changeset}
     end
   end
 
@@ -79,8 +82,10 @@ defmodule Poker.Table do
     cond do
       player_seated(state, user) ->
         {:reply, {:error, "already seated"}, state}
+
       balance_too_low(user, amount) ->
         {:reply, {:error, "not enough chips"}, state}
+
       true ->
         seats = List.insert_at(seats, index, %{user_id: user.id, name: user.name, chips: amount})
 
@@ -118,12 +123,14 @@ defmodule Poker.Table do
   end
 
   defp position_of(%Poker.Table{seats: seats}, %User{id: id}) do
-    case seats |> Enum.with_index |> Enum.find(fn seat ->
-      case seat do
-        {nil,_} -> false
-        {%{user_id: user_id},_} -> user_id == id
-      end
-    end) do
+    case seats
+         |> Enum.with_index()
+         |> Enum.find(fn seat ->
+           case seat do
+             {nil, _} -> false
+             {%{user_id: user_id}, _} -> user_id == id
+           end
+         end) do
       nil -> nil
       {_, matching_pos} -> matching_pos
     end

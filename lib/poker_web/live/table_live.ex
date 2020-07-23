@@ -37,11 +37,11 @@ defmodule PokerWeb.TableLive do
   @impl true
   def handle_event("sit", %{"value" => seat}, socket) do
     case Poker.Table.sit(
-      socket.assigns[:pid],
-      socket.assigns[:user],
-      index: String.to_integer(seat) - 1,
-      amount: 1000
-    ) do
+           socket.assigns[:pid],
+           socket.assigns[:user],
+           index: String.to_integer(seat) - 1,
+           amount: 1000
+         ) do
       :ok -> {:noreply, socket}
       {:error, msg} -> {:noreply, socket |> put_flash(:error, msg)}
     end

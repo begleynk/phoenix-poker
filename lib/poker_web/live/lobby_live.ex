@@ -49,7 +49,6 @@ defmodule PokerWeb.LobbyLive do
       {:ok, _} -> {:noreply, socket |> put_flash(:info, "Table created")}
       {:error, changeset} -> {:noreply, socket |> assign(:changeset, changeset)}
     end
-    
   end
 
   @impl true

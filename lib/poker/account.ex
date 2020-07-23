@@ -126,11 +126,12 @@ defmodule Poker.Account do
 
   """
   def balance(%User{} = user), do: balance(user.id)
+
   def balance(id) do
     Repo.one(
       from u in User,
-      select: u.chips,
-      where: u.id == ^id 
+        select: u.chips,
+        where: u.id == ^id
     )
   end
 
@@ -144,13 +145,16 @@ defmodule Poker.Account do
 
   """
   def subtract_balance(%User{} = user, amount), do: subtract_balance(user.id, amount)
+
   def subtract_balance(id, amount) do
-    {1, _} = Repo.update_all(
-      (from u in User,
-      where: u.id == ^id,
-        update: [set: [chips: u.chips - ^amount]]),
-      []
-    )
+    {1, _} =
+      Repo.update_all(
+        from(u in User,
+          where: u.id == ^id,
+          update: [set: [chips: u.chips - ^amount]]
+        ),
+        []
+      )
 
     :ok
   end
@@ -165,13 +169,16 @@ defmodule Poker.Account do
 
   """
   def add_balance(%User{} = user, amount), do: add_balance(user.id, amount)
+
   def add_balance(id, amount) do
-    {1, _} = Repo.update_all(
-      (from u in User,
-      where: u.id == ^id,
-        update: [set: [chips: u.chips + ^amount]]),
-      []
-    )
+    {1, _} =
+      Repo.update_all(
+        from(u in User,
+          where: u.id == ^id,
+          update: [set: [chips: u.chips + ^amount]]
+        ),
+        []
+      )
 
     :ok
   end

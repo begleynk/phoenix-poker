@@ -12,16 +12,16 @@ defmodule Poker.Game.Phase.Preflop do
   end
 
   # Handle small blind
-  defp handle_call(state, %Action {position: 1, type: :call, amount: 5}) do
+  defp handle_call(state, %Action{position: 1, type: :call, amount: 5}) do
     state
     |> State.place_bet(1, 5)
-    |> State.advance_position
+    |> State.advance_position()
   end
 
   # Handle big blind
-  defp handle_call(state, %Action {position: 2, type: :call, amount: 10}) do
+  defp handle_call(state, %Action{position: 2, type: :call, amount: 10}) do
     state
     |> State.place_bet(2, 10)
-    |> State.advance_position
+    |> State.advance_position()
   end
 end
