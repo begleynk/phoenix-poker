@@ -13,14 +13,7 @@ defmodule Poker.TableTest do
   test "it has 6 seats" do
     name = "the name"
     {:ok, pid} = Poker.Table.start_link(%{name: name})
-assert Poker.Table.seats(pid) == %{
-             1 => nil,
-             2 => nil,
-             3 => nil,
-             4 => nil,
-             5 => nil,
-             6 => nil
-           }
+    assert Poker.Table.seats(pid) == [nil,nil,nil,nil,nil,nil]
   end
 
   test "it can give a copy of its state" do
@@ -31,14 +24,7 @@ assert Poker.Table.seats(pid) == %{
 
     assert %Poker.Table{
              name: ^name,
-             seats: %{
-               1 => nil,
-               2 => nil,
-               3 => nil,
-               4 => nil,
-               5 => nil,
-               6 => nil
-             }
+             seats: [nil,nil,nil,nil,nil,nil]
            } = state
   end
 
@@ -50,7 +36,7 @@ assert Poker.Table.seats(pid) == %{
 
     assert :ok = Poker.Table.sit(pid, user, index: 0, amount: 1000)
 
-    assert [user_id: ^user_id, name: "Joe", chips: 1000] = Map.get(Poker.Table.seats(pid), 0)
+    assert %{user_id: ^user_id, name: "Joe", chips: 1000} = Enum.at(Poker.Table.seats(pid), 0)
     assert Account.balance(user.id) == user.chips - 1000
   end
 
@@ -77,5 +63,21 @@ assert Poker.Table.seats(pid) == %{
     {:ok, pid} = Poker.Table.start_link(%{name: "the_table"})
 
     assert {:error, "not enough chips"} = Poker.Table.sit(pid, user, index: 1, amount: 1000)
+  end
+
+  test "it starts a game if 2 or more players have joined" do
+    {:ok, user1} = Account.create_user(%{name: "Bob"})
+    {:ok, user2} = Account.create_user(%{name: "Alice"})
+
+    {:ok, pid} = Poker.Table.start_link(%{name: "the_table"})
+    Poker.Table.subscribe(pid)
+
+    assert :ok = Poker.Table.sit(pid, user1, index: 1, amount: 1000)
+
+    refute_receive {:new_game, _}, 100
+
+    assert :ok = Poker.Table.sit(pid, user2, index: 2, amount: 1000)
+
+    assert_receive {:new_game, _}, 100
   end
 end

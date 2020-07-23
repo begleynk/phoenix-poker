@@ -38,7 +38,7 @@ defmodule PokerWeb.LobbyLive do
         <%= t.name %>
         <%= link "Join", to: Routes.table_path(@socket, :show, t.name) %>
       </h2>
-      <p>Players: <%= Enum.count(Map.values(t.seats), &(&1 != nil)) %>/ <%= length(Map.keys(t.seats)) %></p>
+      <p>Players: <%= Enum.count(t.seats, &(&1 != nil)) %>/ <%= length(t.seats) %></p>
     <% end %>
     """
   end

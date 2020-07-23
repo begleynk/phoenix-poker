@@ -20,7 +20,11 @@ defmodule PokerWeb.TableLive do
   @impl true
   def render(assigns) do
     ~L"""
-    <p>Playing as <strong><%= @user.name %></strong>. You have <strong><%= @user.chips %></strong> chips remaning.</p>
+    <p>
+      Playing as <strong><%= @user.name %></strong>.
+      You have <strong><%= @user.chips %></strong> chips remaning.
+    </p>
+
     <hr />
     <h1>The game: <%= @this.name %></h1>
 
@@ -35,7 +39,7 @@ defmodule PokerWeb.TableLive do
     case Poker.Table.sit(
       socket.assigns[:pid],
       socket.assigns[:user],
-      index: String.to_integer(seat),
+      index: String.to_integer(seat) - 1,
       amount: 1000
     ) do
       :ok -> {:noreply, socket}
@@ -44,7 +48,12 @@ defmodule PokerWeb.TableLive do
   end
 
   @impl true
-  def handle_info({:state_update, new_table_state}, socket) do
+  def handle_info({:user_left, new_table_state}, socket) do
+    {:noreply, socket |> assign(:this, new_table_state)}
+  end
+
+  @impl true
+  def handle_info({:user_joined, new_table_state}, socket) do
     {:noreply, socket |> assign(:this, new_table_state)}
   end
 end

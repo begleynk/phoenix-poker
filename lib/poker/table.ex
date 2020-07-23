@@ -9,12 +9,12 @@ defmodule Poker.Table do
 
   embedded_schema do
     field :name, :string
-    field :seats, :map, default: %{1 => nil, 2 => nil, 3 => nil, 4 => nil, 5 => nil, 6 => nil}
+    field :seats, :map, default: [nil,nil,nil,nil,nil,nil]
   end
 
   def changeset(table, params \\ %{}) do
     table
-    |> cast(params, [:name, :seats])
+    |> cast(params, [:name])
     |> validate_required([:name])
     |> validate_length(:name, min: 4)
   end
@@ -82,11 +82,13 @@ defmodule Poker.Table do
       balance_too_low(user, amount) ->
         {:reply, {:error, "not enough chips"}, state}
       true ->
-        seats = Map.put(seats, index, [user_id: user.id, name: user.name, chips: amount])
+        seats = List.insert_at(seats, index, %{user_id: user.id, name: user.name, chips: amount})
 
         :ok = Account.subtract_balance(user, amount)
 
-        {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast}
+        GenServer.cast(self(), :start_game)
+
+        {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast(:user_joined)}
     end
   end
 
@@ -94,22 +96,36 @@ defmodule Poker.Table do
   def handle_call({:leave, user}, _from, %Poker.Table{seats: seats} = state) do
     if player_seated(state, user) do
       index = state |> position_of(user)
-      [user_id: _, name: _, chips: remaining_chips] = Map.get(seats, index)
+      %{chips: remaining_chips} = Enum.at(seats, index)
 
-      seats = Map.put(seats, index, nil)
+      seats = List.insert_at(seats, index, nil)
 
       :ok = Account.add_balance(user, remaining_chips)
 
-      {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast}
+      {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast(:user_left)}
     else
       {:reply, :ok, state}
     end
   end
 
+  @impl true
+  def handle_cast(:start_game, %Poker.Table{} = state) do
+    if number_of_players(state) >= 2 do
+      {:noreply, state |> broadcast(:new_game)}
+    else
+      {:noreply, state}
+    end
+  end
+
   defp position_of(%Poker.Table{seats: seats}, %User{id: id}) do
-    case Enum.find(seats, fn {_pos, seat} -> seat[:user_id] == id end) do
+    case seats |> Enum.with_index |> Enum.find(fn seat ->
+      case seat do
+        {nil,_} -> false
+        {%{user_id: user_id},_} -> user_id == id
+      end
+    end) do
       nil -> nil
-      {matching_pos, _} -> matching_pos
+      {_, matching_pos} -> matching_pos
     end
   end
 
@@ -121,8 +137,12 @@ defmodule Poker.Table do
     position_of(state, user) != nil
   end
 
-  defp broadcast(state) do
-    Phoenix.PubSub.broadcast(Poker.PubSub, "table_" <> state.name, {:state_update, state})
+  defp number_of_players(state) do
+    state.seats |> Enum.count(&(&1 != nil))
+  end
+
+  defp broadcast(state, msg) do
+    Phoenix.PubSub.broadcast(Poker.PubSub, "table_" <> state.name, {msg, state})
     state
   end
 end
