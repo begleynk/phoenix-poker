@@ -53,4 +53,9 @@ defmodule Poker.GameHelpers do
     assert actual == expected
     state
   end
+
+  def assert_winner(%Poker.Game.State{winner: winner_pos} = state, expected) do
+    assert winner_pos == expected
+    state
+  end
 end

@@ -19,9 +19,9 @@ defmodule Poker.Game.Phase.Flop do
   def transition(state, action) do
     state
     |> handle_action(action)
-    |> move_to_turn_if_ready
     |> State.push_action(action)
     |> AvailableActions.compute()
+    |> move_to_next_phase
   end
 
   defp deal_community_cards(state) do
@@ -32,11 +32,15 @@ defmodule Poker.Game.Phase.Flop do
     |> Map.put(:deck, deck)
   end
 
-  defp move_to_turn_if_ready(state) do
-    if State.all_players_have_acted?(state) do
-      state |> Phase.Turn.init
+  defp move_to_next_phase(state) do
+    if State.all_but_one_folded?(state) do
+      state |> Phase.Done.init
     else
-      state
+      if State.all_players_have_acted?(state) do
+        state |> Phase.Turn.init
+      else
+        state
+      end
     end
   end
 end

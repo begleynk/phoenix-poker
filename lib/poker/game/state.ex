@@ -11,6 +11,7 @@ defmodule Poker.Game.State do
     :position_states,
     :actions,
     :phase,
+    :winner,
   ]
 
   alias Poker.Deck
@@ -160,6 +161,7 @@ defmodule Poker.Game.State do
       :preflop -> Phase.Preflop.transition(state, action)
       :flop -> Phase.Flop.transition(state, action)
       :turn -> Phase.Turn.transition(state, action)
+      :river -> Phase.River.transition(state, action)
       _ -> raise "Unimplemented phase"
     end
   end
@@ -199,6 +201,19 @@ defmodule Poker.Game.State do
 
   def is_all_in?(state, position) do
     Enum.at(state.players, position).chips == 0
+  end
+
+  def all_but_one_folded?(state) do
+    Enum.count(state.position_states, &(&1 != :folded)) == 1
+  end
+
+  def last_player_standing(state) do
+    {_u, index} =
+      state.position_states
+      |> Enum.with_index
+      |> Enum.find(fn({_s, i}) -> !has_folded?(state, i) end)
+
+    index
   end
 
   def active_players(state) do

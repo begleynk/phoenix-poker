@@ -38,4 +38,18 @@ defmodule Poker.Game.Phase.FlopTest do
     Game.state(pid)
     |> assert_phase(:turn)
   end
+
+  @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
+  test "game ends if everyone but one player folds", %{players: players} do
+    pid = preflop_game("flop winner", players)
+
+    assert :ok = Game.handle_action(pid, Action.bet(amount: 50, position: 0))
+    assert :ok = Game.handle_action(pid, Action.fold(position: 1))
+    assert :ok = Game.handle_action(pid, Action.fold(position: 2))
+    assert :ok = Game.handle_action(pid, Action.fold(position: 3))
+
+    Game.state(pid)
+    |> assert_phase(:done)
+    |> assert_winner(0)
+  end
 end
