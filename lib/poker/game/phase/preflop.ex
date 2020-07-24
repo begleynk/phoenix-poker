@@ -58,13 +58,20 @@ defmodule Poker.Game.Phase.Preflop do
     |> State.advance_position()
   end
 
+  # Handle bets
+  defp handle_action(state, %Action{position: pos, type: :bet, amount: amount}) do
+    state
+    |> State.place_bet(pos, amount)
+    |> State.advance_position()
+  end
+
   # Handle checks
   defp handle_action(state, %Action{type: :check, position: pos}) do
     state
     |> State.mark_done(pos)
     |> State.advance_position()
   end
-  #
+
   # Handle folds
   defp handle_action(state, %Action{type: :fold, position: pos}) do
     state
