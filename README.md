@@ -1,20 +1,20 @@
 # Poker
 
-To start your Phoenix server:
+A multiplayer Texas Hold'em Poker game built with Phoenix LiveView.
 
-  * Install dependencies with `mix deps.get`
-  * Create and migrate your database with `mix ecto.setup`
-  * Install Node.js dependencies with `npm install` inside the `assets` directory
-  * Start Phoenix endpoint with `mix phx.server`
+Years ago I attempted to build a [poker game in Phoenix](https://github.com/begleynk/elixir-poker-server/),
+but like many side projects it fell by the wayside. This is a re-imagining of that project, but
+with LiveView.
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+## Status
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+Still a work in progress.
 
-## Learn more
+## TODO
 
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+* [ ] Proof of concept game UI
+  * [ ] PubSub broadcast of game state changes
+  * [ ] Hook up Phoenix presence to detect user disconnects
+* [ ] All-In handling
+* [ ] Split pots
+* [ ] CSS animations for cards
