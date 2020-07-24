@@ -48,4 +48,9 @@ defmodule Poker.GameHelpers do
     assert phase == expected
     state
   end
+
+  def assert_position_states(%Poker.Game.State{position_states: actual} = state, expected) do
+    assert actual == expected
+    state
+  end
 end

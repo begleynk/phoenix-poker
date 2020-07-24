@@ -53,8 +53,8 @@ defmodule Poker.GameTest do
       })
 
     assert Game.pot(pid) == 0
-    assert Game.bets(pid) == [0, 0, 0, 0, 0, 0]
-    assert Game.position(pid) == 1
+    assert Game.bets(pid) == [0, 0, 0, 0]
+    assert Game.position(pid) == 0
 
     Enum.each(Game.players(pid), fn player ->
       assert {nil, nil} = player.cards
@@ -62,23 +62,23 @@ defmodule Poker.GameTest do
 
     assert Game.state(pid).available_actions == [{:call, 5}]
 
-    assert :ok = Game.handle_action(pid, Game.Action.call(amount: 5, position: 1))
+    assert :ok = Game.handle_action(pid, Game.Action.call(amount: 5, position: 0))
 
     assert Game.pot(pid) == 0
-    assert Game.bets(pid) == [0, 5, 0, 0, 0, 0]
-    assert Game.position(pid) == 2
+    assert Game.bets(pid) == [5, 0, 0, 0]
+    assert Game.position(pid) == 1
     assert Game.state(pid).available_actions == [{:call, 10}]
 
-    assert :ok = Game.handle_action(pid, Game.Action.call(amount: 10, position: 2))
+    assert :ok = Game.handle_action(pid, Game.Action.call(amount: 10, position: 1))
 
     assert Game.pot(pid) == 0
-    assert Game.bets(pid) == [0, 5, 10, 0, 0, 0]
-    assert Game.position(pid) == 3
+    assert Game.bets(pid) == [5, 10, 0, 0]
+    assert Game.position(pid) == 2
 
     Enum.each(Game.players(pid), fn player ->
       assert {%Poker.Card{}, %Poker.Card{}} = player.cards
     end)
 
-    assert Game.state(pid).available_actions == [:bet, {:call, 10}, :fold]
+    Game.state(pid) |> assert_available_actions([:bet, {:call, 10}, :fold])
   end
 end

@@ -5,7 +5,10 @@ defmodule Poker.Game.Phase.Flop do
 
   @impl true
   def init(%State{} = state) do
-    Map.put(state, :phase, :flop)
+    state
+    |> Map.put(:phase, :flop)
+    |> Map.put(:position, 0)
+    |> State.reset_states
   end
 
   @impl true

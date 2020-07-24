@@ -6,19 +6,17 @@ defmodule Poker.Game.State do
     :community_cards,
     :bets,
     :pot,
-    :stage,
     :available_actions,
     :position,
+    :position_states,
     :actions,
     :phase,
-    :actions_in_phase,
   ]
 
   alias Poker.Deck
   alias Poker.Game.State
   alias Poker.Game.Action
   alias Poker.Game.Phase
-  alias Poker.Game.AvailableActions
 
   def new(%{players: players, name: name}) do
     Phase.Preflop.init(%State{players: players, name: name})
@@ -47,7 +45,17 @@ defmodule Poker.Game.State do
   def push_action(%State{} = state, %Action{} = action) do
     state
     |> Map.update!(:actions, fn actions -> [action | actions] end)
-    |> Map.update!(:actions_in_phase, &(&1 + 1))
+  end
+
+  def call_bet(%State{} = state, position, amount) do
+    state
+    |> Map.update!(:bets, fn bets -> List.update_at(bets, position, &(&1 + amount)) end)
+    |> Map.update!(:players, fn players ->
+         List.update_at(players, position, fn(player) ->
+           Map.update!(player, :chips, &(&1 - amount))
+         end)
+      end)
+    |> mark_done(position)
   end
 
   def place_bet(%State{} = state, position, amount) do
@@ -58,6 +66,60 @@ defmodule Poker.Game.State do
            Map.update!(player, :chips, &(&1 - amount))
          end)
       end)
+    |> reset_others_states(position)
+  end
+
+  def mark_done(state, me) do
+    Map.update!(state, :position_states, fn states ->
+      List.update_at(states, me, fn(_) -> :done end)
+    end)
+  end
+
+  def mark_active(state, me) do
+    Map.update!(state, :position_states, fn states ->
+      List.update_at(states, me, fn(_) -> :active end)
+    end)
+  end
+
+  def reset_others_states(state, me) do
+    Map.update!(state, :position_states, fn(states) -> 
+      states
+      |> Enum.with_index
+      |> Enum.map(fn({state, index}) -> 
+           if index == me do
+             :done
+           else
+             if state != :folded do
+               :active
+             else
+               state
+             end
+           end
+         end)
+    end)
+  end
+
+  def reset_states(state) do
+    Map.update!(state, :position_states, fn(states) -> 
+      states
+      |> Enum.with_index |> Enum.map(fn({state, _index}) -> 
+           if state != :folded do
+             :active
+           else
+             state
+           end
+       end)
+    end)
+  end
+
+  def fold_player(%State{} = state, position) do
+    Map.update!(state, :position_states, fn players ->
+      List.update_at(players, position, fn(_) -> :folded end)
+    end)
+  end
+
+  def has_folded?(state, position) do
+    Enum.at(state.position_states, position) == :folded
   end
 
   def deal_pocket_cards(%State{} = s) do
@@ -74,8 +136,23 @@ defmodule Poker.Game.State do
     end)
   end
 
-  def advance_position(%State{players: players} = state) do
-    state |> Map.update!(:position, fn pos -> rem(pos + 1, length(players)) end)
+  @doc """
+  Advances the position to the next player still in the game.
+  NOTE: It's a nasty function...
+  """
+  def advance_position(%State{players: players, position: position} = state) do
+    players =
+      Enum.concat(players |> Enum.with_index, (players |> Enum.with_index))
+      |> Enum.with_index
+
+    {{_,_}, index} = Enum.find(players, fn({{_,_pos}, i}) ->
+      i == position
+    end)
+    {{_, pos,}, _} = Enum.find(players, fn({{_, p}, i}) ->
+      !has_folded?(state, p) && i > index
+    end)
+
+    Map.put(state, :position, pos)
   end
 
   def transition(%State{} = state, %Action{} = action) do
@@ -104,12 +181,15 @@ defmodule Poker.Game.State do
   end
 
   def no_bets_to_match?(state) do
-    0..(length(state.players) - 1)
-    |> Enum.all?(fn(pos) -> to_call(state, pos) == 0 end)
+    active_player_positions(state) |> Enum.all?(fn(pos) -> bet_matched?(state, pos) end)
   end
 
   def all_players_have_acted?(state) do
-    no_bets_to_match?(state) && state.actions_in_phase > length(state.players)
+    no_bets_to_match?(state) && everyone_acted?(state)
+  end
+
+  def everyone_acted?(state) do
+    Enum.all?(state.position_states, fn(state) -> state in [:done, :folded] end)
   end
 
   def highest_bet(state) do
@@ -118,5 +198,16 @@ defmodule Poker.Game.State do
 
   def is_all_in?(state, position) do
     Enum.at(state.players, position).chips == 0
+  end
+
+  def active_players(state) do
+    state.players |> Enum.reject(&(&1.cards == nil))
+  end
+
+  def active_player_positions(state) do
+    state.players
+    |> Enum.with_index
+    |> Enum.reject(fn({_, index}) -> has_folded?(state, index) end)
+    |> Enum.map(fn({_, index}) -> index end)
   end
 end

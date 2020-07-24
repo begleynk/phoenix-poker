@@ -15,11 +15,11 @@ defmodule Poker.Game.Phase.Preflop do
       community_cards: [],
       deck: Deck.new(),
       pot: 0,
-      bets: [0, 0, 0, 0, 0, 0],
+      bets: List.duplicate(0, length(players)),
       phase: :preflop,
-      position: 1,
+      position: 0, # Button is the last position. 0 == small blind, 1 == big blind, etc.
+      position_states: List.duplicate(:active, length(players)),
       actions: [],
-      actions_in_phase: 0,
     } |> AvailableActions.compute
   end
 
@@ -33,30 +33,42 @@ defmodule Poker.Game.Phase.Preflop do
   end
 
   # Handle small blind
-  defp handle_action(state, %Action{position: 1, type: :call, amount: 5}) do
+  defp handle_action(%State{actions: []} = state, %Action{position: 0, type: :call, amount: 5}) do
     state
-    |> State.place_bet(1, 5)
+    |> State.call_bet(0, 5)
+    |> State.mark_active(0)
     |> State.advance_position()
   end
 
   # Handle big blind
-  defp handle_action(state, %Action{position: 2, type: :call, amount: 10}) do
+  defp handle_action(%State{actions: actions} = state, %Action{position: 1, type: :call, amount: 10})
+  when length(actions) == 1
+  do
     state
-    |> State.place_bet(2, 10)
+    |> State.call_bet(1, 10)
+    |> State.mark_active(1)
     |> State.deal_pocket_cards()
     |> State.advance_position()
   end
 
-  # Handle others
+  # Handle other calls
   defp handle_action(state, %Action{position: pos, type: :call, amount: amount}) do
     state
-    |> State.place_bet(pos, amount)
+    |> State.call_bet(pos, amount)
     |> State.advance_position()
   end
 
-  # Handle others
-  defp handle_action(state, %Action{type: :check}) do
+  # Handle checks
+  defp handle_action(state, %Action{type: :check, position: pos}) do
     state
+    |> State.mark_done(pos)
+    |> State.advance_position()
+  end
+  #
+  # Handle folds
+  defp handle_action(state, %Action{type: :fold, position: pos}) do
+    state
+    |> State.fold_player(pos)
     |> State.advance_position()
   end
 
