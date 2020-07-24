@@ -10,7 +10,7 @@ defmodule Poker.Game.Phase.PreflopTest do
 
     Game.state(pid)
     |> assert_pot(0)
-    |> assert_community_cards([])
+    |> assert_community_card_count(0)
     |> assert_next_to_act(0)
     |> assert_available_actions([{:call, 5}])
     |> assert_position_states([:active, :active, :active, :active])
@@ -19,7 +19,7 @@ defmodule Poker.Game.Phase.PreflopTest do
 
     Game.state(pid)
     |> assert_pot(0)
-    |> assert_community_cards([])
+    |> assert_community_card_count(0)
     |> assert_next_to_act(1)
     |> assert_player_stack(0, 995)
     |> assert_available_actions([{:call, 10}])
@@ -29,7 +29,7 @@ defmodule Poker.Game.Phase.PreflopTest do
 
     Game.state(pid)
     |> assert_pot(0)
-    |> assert_community_cards([])
+    |> assert_community_card_count(0)
     |> assert_next_to_act(2)
     |> assert_available_actions([{:call, 10}, :bet, :fold])
     |> assert_player_stack(1, 990)
@@ -39,7 +39,7 @@ defmodule Poker.Game.Phase.PreflopTest do
 
     Game.state(pid)
     |> assert_pot(0)
-    |> assert_community_cards([])
+    |> assert_community_card_count(0)
     |> assert_next_to_act(3)
     |> assert_available_actions([{:call, 10}, :bet, :fold])
     |> assert_player_stack(2, 990)
@@ -49,7 +49,7 @@ defmodule Poker.Game.Phase.PreflopTest do
 
     Game.state(pid)
     |> assert_pot(0)
-    |> assert_community_cards([])
+    |> assert_community_card_count(0)
     |> assert_next_to_act(0)
     |> assert_available_actions([{:call, 5}, :bet, :fold])
     |> assert_player_stack(3, 990)
@@ -59,7 +59,7 @@ defmodule Poker.Game.Phase.PreflopTest do
 
     Game.state(pid)
     |> assert_pot(0)
-    |> assert_community_cards([])
+    |> assert_community_card_count(0)
     |> assert_next_to_act(1)
     |> assert_available_actions([:check, :bet, :fold])
     |> assert_player_stack(0, 990)

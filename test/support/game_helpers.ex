@@ -21,8 +21,8 @@ defmodule Poker.GameHelpers do
     state
   end
 
-  def assert_community_cards(%Poker.Game.State{community_cards: cards} = state, match) do
-    assert ^match = cards #, "Community cards did not match expected"
+  def assert_community_card_count(%Poker.Game.State{community_cards: cards} = state, count) do
+    assert length(cards) == count
     state
   end
 
