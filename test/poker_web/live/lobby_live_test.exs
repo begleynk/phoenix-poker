@@ -3,15 +3,6 @@ defmodule PokerWeb.LobbyLiveTest do
 
   import Phoenix.LiveViewTest
 
-  setup %{conn: conn} = config do
-    if name = config[:login_as] do
-      {:ok, user} = Poker.Account.create_user(%{name: name})
-      {:ok, conn: init_test_session(conn, user_id: user.id), user: user}
-    else
-      :ok
-    end
-  end
-
   @tag login_as: "Phil"
   test "it renders the header", %{conn: conn} do
     conn = get(conn, Routes.lobby_path(conn, :index))

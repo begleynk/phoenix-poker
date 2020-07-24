@@ -40,4 +40,19 @@ defmodule PokerWeb.ConnCase do
 
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
+
+  setup %{conn: conn} = config do
+    if name = config[:login_as] do
+      user = case Poker.Account.get_user_by_name(name) do
+        nil -> 
+          {:ok, user} = Poker.Account.create_user(%{name: name})
+          user
+        user -> user
+      end
+
+      {:ok, conn: Plug.Test.init_test_session(conn, user_id: user.id), user: user}
+    else
+      :ok
+    end
+  end
 end
