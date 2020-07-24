@@ -1,5 +1,5 @@
 defmodule Poker.Game.Phase.Preflop do
-  @behaviour Poker.Game.Phase
+  use Poker.Game.Phase
 
   alias Poker.Game.State
   alias Poker.Game.Action
@@ -8,10 +8,9 @@ defmodule Poker.Game.Phase.Preflop do
   alias Poker.Deck
 
   @impl true
-  def init(%State{players: players, name: name}) do
+  def init(%State{players: players, name: _n} = state) do
     %State{
-      players: build_players(players),
-      name: name,
+      state | 
       community_cards: [],
       deck: Deck.new(),
       pot: 0,
@@ -51,50 +50,11 @@ defmodule Poker.Game.Phase.Preflop do
     |> State.advance_position()
   end
 
-  # Handle other calls
-  defp handle_action(state, %Action{position: pos, type: :call, amount: amount}) do
-    state
-    |> State.call_bet(pos, amount)
-    |> State.advance_position()
-  end
-
-  # Handle bets
-  defp handle_action(state, %Action{position: pos, type: :bet, amount: amount}) do
-    state
-    |> State.place_bet(pos, amount)
-    |> State.advance_position()
-  end
-
-  # Handle checks
-  defp handle_action(state, %Action{type: :check, position: pos}) do
-    state
-    |> State.mark_done(pos)
-    |> State.advance_position()
-  end
-
-  # Handle folds
-  defp handle_action(state, %Action{type: :fold, position: pos}) do
-    state
-    |> State.fold_player(pos)
-    |> State.advance_position()
-  end
-
   defp move_to_flop_if_ready(state) do
     if State.all_players_have_acted?(state) do
       state |> Phase.Flop.init
     else
       state
     end
-  end
-
-  defp build_players(players) do
-    Enum.map(players, fn player ->
-      %{
-        user_id: player[:user_id],
-        name: player[:name],
-        chips: player[:chips],
-        cards: {nil, nil}
-      }
-    end)
   end
 end

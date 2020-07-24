@@ -1,4 +1,4 @@
-defmodule Poker.Game.Phase.Flop do
+defmodule Poker.Game.Phase.Turn do
   use Poker.Game.Phase
 
   alias Poker.Game.State
@@ -9,9 +9,9 @@ defmodule Poker.Game.Phase.Flop do
   @impl true
   def init(%State{} = state) do
     state
-    |> Map.put(:phase, :flop)
+    |> Map.put(:phase, :turn)
     |> Map.put(:position, 0)
-    |> deal_community_cards
+    |> deal_single_community_card
     |> State.reset_states
   end
 
@@ -19,22 +19,22 @@ defmodule Poker.Game.Phase.Flop do
   def transition(state, action) do
     state
     |> handle_action(action)
-    |> move_to_turn_if_ready
+    |> move_to_river_if_ready
     |> State.push_action(action)
     |> AvailableActions.compute()
   end
 
-  defp deal_community_cards(state) do
-    {:ok, cards, deck} = Deck.draw_cards(state.deck, 3)
+  defp deal_single_community_card(state) do
+    {:ok, card, deck} = Deck.draw_card(state.deck)
 
     state
-    |> Map.put(:community_cards, cards)
+    |> Map.update!(:community_cards, fn(cards) -> [card | cards] end)
     |> Map.put(:deck, deck)
   end
 
-  defp move_to_turn_if_ready(state) do
+  defp move_to_river_if_ready(state) do
     if State.all_players_have_acted?(state) do
-      state |> Phase.Turn.init
+      state |> Phase.River.init
     else
       state
     end

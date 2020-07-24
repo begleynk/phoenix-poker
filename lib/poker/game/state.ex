@@ -19,7 +19,7 @@ defmodule Poker.Game.State do
   alias Poker.Game.Phase
 
   def new(%{players: players, name: name}) do
-    Phase.Preflop.init(%State{players: players, name: name})
+    Phase.Preflop.init(%State{players: build_players(players), name: name})
   end
 
   def handle_action(%State{} = state, %Action{} = action) do
@@ -159,6 +159,7 @@ defmodule Poker.Game.State do
     case state.phase do
       :preflop -> Phase.Preflop.transition(state, action)
       :flop -> Phase.Flop.transition(state, action)
+      :turn -> Phase.Turn.transition(state, action)
       _ -> raise "Unimplemented phase"
     end
   end
@@ -209,5 +210,16 @@ defmodule Poker.Game.State do
     |> Enum.with_index
     |> Enum.reject(fn({_, index}) -> has_folded?(state, index) end)
     |> Enum.map(fn({_, index}) -> index end)
+  end
+
+  defp build_players(players) do
+    Enum.map(players, fn player ->
+      %{
+        user_id: player[:user_id],
+        name: player[:name],
+        chips: player[:chips],
+        cards: {nil, nil}
+      }
+    end)
   end
 end
