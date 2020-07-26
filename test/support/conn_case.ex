@@ -32,7 +32,11 @@ defmodule PokerWeb.ConnCase do
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Poker.Repo)
+    case Ecto.Adapters.SQL.Sandbox.checkout(Poker.Repo) do
+      :ok -> :ok
+      {:already, :owner} -> :ok
+      other -> raise(other)
+    end
 
     unless tags[:async] do
       Ecto.Adapters.SQL.Sandbox.mode(Poker.Repo, {:shared, self()})

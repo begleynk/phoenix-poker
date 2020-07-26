@@ -11,6 +11,8 @@ defmodule Poker.Application do
       Poker.Repo,
       # Start the Lobby
       Poker.Lobby,
+      # Start the game supervisor
+      Poker.GameSupervisor,
       # Start the Telemetry supervisor
       PokerWeb.Telemetry,
       # Start the PubSub system

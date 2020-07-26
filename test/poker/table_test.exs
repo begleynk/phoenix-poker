@@ -78,6 +78,29 @@ defmodule Poker.TableTest do
 
     assert :ok = Poker.Table.sit(pid, user2, index: 2, amount: 1000)
 
-    assert_receive {:new_game, _}, 100
+    refute :undefined == Poker.Game.whereis(Poker.Table.state(pid).current_game)
+  end
+
+  test "starts a game with the order of players based on the button" do
+    {:ok, user1} = Account.create_user(%{name: "Bob"})
+    {:ok, user2} = Account.create_user(%{name: "Alice"})
+    {:ok, user3} = Account.create_user(%{name: "Jane"})
+
+    {:ok, pid} = Poker.Table.start_link(%{name: "the_table"})
+    :ok = Poker.Table.disable_auto_start(pid)
+    :ok = Poker.Table.set_button(pid, 1) # This willl advance by one when the game starts
+
+    assert :ok = Poker.Table.sit(pid, user1, index: 0, amount: 1000)
+    assert :ok = Poker.Table.sit(pid, user2, index: 1, amount: 1000)
+    assert :ok = Poker.Table.sit(pid, user3, index: 2, amount: 1000)
+
+    Poker.Table.start_game(pid)
+
+    state = Poker.Game.whereis(Poker.Table.state(pid).current_game) |> Poker.Game.state
+
+    assert Poker.Table.state(pid).button == 2
+    assert Enum.at(state.players, 0).user_id == user2.id
+    assert Enum.at(state.players, 1).user_id == user3.id
+    assert Enum.at(state.players, 2).user_id == user1.id
   end
 end

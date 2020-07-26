@@ -8,7 +8,7 @@ defmodule Poker.Game.Phase.Preflop do
   alias Poker.Deck
 
   @impl true
-  def init(%State{players: players, name: _n} = state) do
+  def init(%State{players: players, id: _n} = state) do
     %State{
       state | 
       community_cards: [],

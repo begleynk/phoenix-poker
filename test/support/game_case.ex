@@ -10,7 +10,7 @@ defmodule Poker.GameCase do
     quote do
       use Poker.DataCase
       use Poker.GameHelpers
-      
+
       import Poker.GameHelpers
     end
   end

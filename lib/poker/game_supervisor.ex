@@ -14,13 +14,17 @@ defmodule Poker.GameSupervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  def start_game(%{id: _id, players: _players} = init_state) do
+  def start_game(seats) do
     spec = %{
       id: Game,
-      start: {Game, :start_link, [init_state]},
+      start: {Game, :start_link, [%{players: seats, id: generate_id()}]},
       restart: :transient
     }
 
     DynamicSupervisor.start_child(__MODULE__, spec)
+  end
+
+  def generate_id do
+    UUID.uuid4(:hex) |> String.slice(0, 16)
   end
 end

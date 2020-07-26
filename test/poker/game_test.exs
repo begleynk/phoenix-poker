@@ -7,7 +7,7 @@ defmodule Poker.GameTest do
   test "the game starts with players posting blinds", %{players: players} do
     {:ok, pid} =
       Game.start_link(%{
-        name: "not_important",
+        id: "not_important",
         players: players,
       })
 
@@ -47,7 +47,7 @@ defmodule Poker.GameTest do
   test "game moves on via actions", %{players: players} do
     {:ok, pid} =
       Game.start_link(%{
-        name: "not_important",
+        id: "not_important",
         players: players,
         button: 0
       })

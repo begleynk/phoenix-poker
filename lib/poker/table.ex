@@ -5,11 +5,16 @@ defmodule Poker.Table do
   import Ecto.Changeset
 
   alias Poker.Account
+  alias Poker.Game
+  alias Poker.GameSupervisor
   alias Poker.Account.User
 
   embedded_schema do
     field :name, :string
     field :seats, :map, default: [nil, nil, nil, nil, nil, nil]
+    field :current_game, :string
+    field :button, :integer, default: 0
+    field :auto_start, :boolean, default: true
   end
 
   def changeset(table, params \\ %{}) do
@@ -54,12 +59,32 @@ defmodule Poker.Table do
     GenServer.call(pid, :seats)
   end
 
+  def current_game(pid) do
+    GenServer.call(pid, :current_game)
+  end
+
   def sit(pid, %User{} = user, index: index, amount: amount) do
     GenServer.call(pid, {:sit, user, index, amount})
   end
 
   def leave(pid, index) do
     GenServer.call(pid, {:leave, index})
+  end
+
+  def start_game(pid) do
+    GenServer.cast(pid, :start_game)
+  end
+
+  @doc """
+  Only for testing purposes. Some tests want to handle starting and stopping
+  of games themselves.
+  """
+  def disable_auto_start(pid) do
+    GenServer.call(pid, :disable_auto_start)
+  end
+
+  def set_button(pid, position) do
+    GenServer.call(pid, {:set_button, position})
   end
 
   @impl true
@@ -78,6 +103,16 @@ defmodule Poker.Table do
   end
 
   @impl true
+  def handle_call(:current_game, _from, %Poker.Table{current_game: current_game} = state) do
+    {:reply, current_game, state}
+  end
+
+  @impl true
+  def handle_call({:set_button, pos}, _, %Poker.Table{} = state) do
+    {:reply, :ok, Map.put(state, :button, pos)}
+  end
+
+  @impl true
   def handle_call({:sit, user, index, amount}, _from, %Poker.Table{seats: seats} = state) do
     cond do
       player_seated(state, user) ->
@@ -87,11 +122,13 @@ defmodule Poker.Table do
         {:reply, {:error, "not enough chips"}, state}
 
       true ->
-        seats = List.insert_at(seats, index, %{user_id: user.id, name: user.name, chips: amount})
+        seats = List.update_at(seats, index, fn(_) ->
+          %{user_id: user.id, name: user.name, chips: amount}
+        end)
 
         :ok = Account.subtract_balance(user, amount)
 
-        GenServer.cast(self(), :start_game)
+        if state.auto_start, do: GenServer.cast(self(), :start_game)
 
         {:reply, :ok, %Poker.Table{state | seats: seats} |> broadcast(:user_joined)}
     end
@@ -114,9 +151,14 @@ defmodule Poker.Table do
   end
 
   @impl true
+  def handle_call(:disable_auto_start, _, %Poker.Table{} = state) do
+    {:reply, :ok, Map.put(state, :auto_start, false)}
+  end
+
+  @impl true
   def handle_cast(:start_game, %Poker.Table{} = state) do
     if number_of_players(state) >= 2 do
-      {:noreply, state |> broadcast(:new_game)}
+      {:noreply, state |> do_start_game |> broadcast(:new_game)}
     else
       {:noreply, state}
     end
@@ -146,6 +188,36 @@ defmodule Poker.Table do
 
   defp number_of_players(state) do
     state.seats |> Enum.count(&(&1 != nil))
+  end
+
+  def do_start_game(state) do
+    state = advance_button(state)
+
+    {:ok, pid} = GameSupervisor.start_game(state.seats |> gather_players(state.button))
+
+    Map.put(state, :current_game, Game.id(pid)) |> broadcast(:new_game)
+  end
+
+  defp advance_button(state) do
+    state = Map.update!(state, :button, &(&1 + 1))
+
+    case Enum.at(state.seats, state.button) do
+      nil -> advance_button(state)
+      _players -> state
+    end
+  end
+
+  def gather_players(players, button) do
+    players
+    |> Enum.reject(&(&1 == nil))
+    |> Enum.reverse
+    |> rotate(button)
+    |> Enum.reverse
+  end
+
+  def rotate(list, times) when times == 0, do: list
+  def rotate([head | list], times) do
+    rotate(list ++ [head], times - 1)
   end
 
   defp broadcast(state, msg) do

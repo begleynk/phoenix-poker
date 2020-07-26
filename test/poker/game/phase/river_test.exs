@@ -5,7 +5,7 @@ defmodule Poker.Game.Phase.RiverTest do
   alias Poker.Game.Action
 
   def turn_game(name, players) do
-    {:ok, pid} = Game.start_link(%{name: name, players: players })
+    {:ok, pid} = Game.start_link(%{id: name, players: players })
 
     assert :ok = Game.handle_action(pid, Action.call(amount: 5, position: 0))
     assert :ok = Game.handle_action(pid, Action.call(amount: 10, position: 1))

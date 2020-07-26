@@ -6,7 +6,7 @@ defmodule Poker.Game.Phase.PreflopTest do
 
   @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
   test "it deals cards when blinds are posted", %{players: players} do
-    {:ok, pid} = Game.start_link(%{name: "preflop_dealing", players: players })
+    {:ok, pid} = Game.start_link(%{id: "preflop_dealing", players: players })
 
     Game.state(pid)
     |> assert_pot(0)
@@ -72,7 +72,7 @@ defmodule Poker.Game.Phase.PreflopTest do
 
   @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
   test "it transitions to flop if some people have folded", %{players: players} do
-    {:ok, pid} = Game.start_link(%{name: "preflop_folding", players: players })
+    {:ok, pid} = Game.start_link(%{id: "preflop_folding", players: players })
 
     assert :ok = Game.handle_action(pid, Action.call(amount: 5, position: 0))
     assert :ok = Game.handle_action(pid, Action.call(amount: 10, position: 1))
@@ -86,7 +86,7 @@ defmodule Poker.Game.Phase.PreflopTest do
 
   @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
   test "it transitions only once all bets are matched", %{players: players} do
-    {:ok, pid} = Game.start_link(%{name: "preflop_folding", players: players })
+    {:ok, pid} = Game.start_link(%{id: "preflop_folding", players: players })
 
     assert :ok = Game.handle_action(pid, Action.call(amount: 5, position: 0))
     assert :ok = Game.handle_action(pid, Action.call(amount: 10, position: 1))

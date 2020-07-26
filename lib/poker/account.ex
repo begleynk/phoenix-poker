@@ -57,6 +57,11 @@ defmodule Poker.Account do
   def get_user_by_name(name), do: Repo.get_by(User, [name: name])
 
   @doc """
+  Finds a user by the given parameters
+  """
+  def get_user_by(keywords), do: Repo.get_by(User, keywords)
+
+  @doc """
   Creates a user.
 
   ## Examples
@@ -71,26 +76,6 @@ defmodule Poker.Account do
   def create_user(attrs \\ %{}) do
     %User{}
     |> User.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  @doc """
-  Finds or creates a user with the given name.
-
-  ## Examples
-
-      iex> find_or_create(%{field: value})
-      {:ok, %User{}}
-
-      iex> find_or_create(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def find_or_create(name) do
-
-
-    %User{}
-    |> User.changeset(%{name: name})
     |> Repo.insert()
   end
 

@@ -2,17 +2,24 @@ defmodule PokerWeb.TableLive do
   use PokerWeb, :live_view
 
   alias Poker.Account
+  alias Poker.Table
+  alias Poker.Game
 
   @impl true
   def mount(params, %{"user_id" => id}, socket) do
-    pid = Poker.Table.whereis(params["name"])
-    Poker.Table.subscribe(pid)
+    pid = Table.whereis(params["name"])
+    Table.subscribe(pid)
 
     socket =
       socket
-      |> assign(user: Account.get_user!(id))
+      |> assign(:user, Account.get_user!(id))
       |> assign(:pid, pid)
-      |> assign(:this, Poker.Table.state(pid))
+      |> assign(:this, Table.state(pid))
+
+    socket = case Table.current_game(pid) do
+      nil -> assign(socket, :current_game, nil)
+      id  -> assign(socket, :current_game, Game.whereis(id) |> Game.state)
+    end
 
     {:ok, socket}
   end
@@ -26,17 +33,35 @@ defmodule PokerWeb.TableLive do
     </p>
 
     <hr />
-    <h1>The game: <%= @this.name %></h1>
+    <h1>Table: <%= @this.name %></h1>
 
-    <%= for {i, seat} <- @this.seats do %>
-      <%= live_component(@socket, PokerWeb.SeatLive, id: i, seat: seat) %>
-    <% end %>
+
+    <div class='table'>
+      <%= for {seat, i} <- Enum.with_index(@this.seats) do %>
+        <%= live_component(
+          @socket,
+          PokerWeb.SeatLive,
+          id: i + 1,
+          seat: seat,
+          user_seated: current_user_sitting?(@this.seats, @user))
+        %>
+      <% end %>
+
+      <div class='game'>
+        <%= live_component(
+          @socket,
+          PokerWeb.GameLive,
+          game: @current_game,
+          current_user: @user)
+        %>
+      </div>
+    </div>
     """
   end
 
   @impl true
   def handle_event("sit", %{"value" => seat}, socket) do
-    case Poker.Table.sit(
+    case Table.sit(
            socket.assigns[:pid],
            socket.assigns[:user],
            index: String.to_integer(seat) - 1,
@@ -55,5 +80,28 @@ defmodule PokerWeb.TableLive do
   @impl true
   def handle_info({:user_joined, new_table_state}, socket) do
     {:noreply, socket |> assign(:this, new_table_state)}
+  end
+
+  @impl true
+  def handle_info({:new_game, new_table_state}, socket) do
+    current_game =
+      Game.whereis(new_table_state.current_game)
+      |> Game.state
+
+    Game.subscribe(current_game)
+
+    {:noreply, socket |> assign(:current_game, current_game)}
+  end
+
+  @impl true
+  def handle_info({:game_state, new_game_state}, socket) do
+    {:noreply, socket |> assign(:current_game, new_game_state)}
+  end
+
+  def current_user_sitting?(seats, user) do
+    seats
+    |> Enum.reject(&(&1 == nil))
+    |> Enum.map(&(&1.user_id))
+    |> Enum.member?(user.id)
   end
 end

@@ -1,6 +1,6 @@
 defmodule Poker.Game.State do
   defstruct [
-    :name,
+    :id,
     :players,
     :deck,
     :community_cards,
@@ -19,13 +19,13 @@ defmodule Poker.Game.State do
   alias Poker.Game.Action
   alias Poker.Game.Phase
 
-  def new(%{players: players, name: name}) do
-    Phase.Preflop.init(%State{players: build_players(players), name: name})
+  def new(%{players: players, id: id}) do
+    Phase.Preflop.init(%State{players: build_players(players), id: id}) |> broadcast
   end
 
   def handle_action(%State{} = state, %Action{} = action) do
     case validate_action(state, action) do
-      :ok -> {:ok, state |> transition(action) }
+      :ok -> {:ok, state |> transition(action) |> broadcast }
       error -> error
     end
   end
@@ -236,5 +236,10 @@ defmodule Poker.Game.State do
         cards: {nil, nil}
       }
     end)
+  end
+
+  defp broadcast(state) do
+    Phoenix.PubSub.broadcast(Poker.PubSub, "game_" <> state.id, {:game_state, state})
+    state
   end
 end

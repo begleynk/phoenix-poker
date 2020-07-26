@@ -2,6 +2,47 @@
 @import "./phoenix.css";
 @import "../node_modules/nprogress/nprogress.css";
 
+.table {
+  width: 960px;
+  height: 600px;
+  background: green;
+  border-radius: 60%;
+  -webkit-box-shadow: inset 0px 5px 12px -1px #000000; 
+  box-shadow: inset 0px 5px 12px -1px #000000;
+  border: solid 15px brown;
+}
+
+.table .seat {
+  background: grey;
+  padding: 15px;
+  border-radius: 15px;
+  border: 2px solid white;
+  position: absolute;
+  display: inline-block;
+  width: 150px;
+  height: 150px;
+  text-align: center;
+}
+
+.table .seat:nth-child(1) {
+  transform: translate(0px);
+}
+.table .seat:nth-child(2) {
+  transform: translate(390px, -100px);
+}
+.table .seat:nth-child(3) {
+  transform: translate(780px, 0px);
+}
+.table .seat:nth-child(4) {
+  transform: translate(780px, 400px);
+}
+.table .seat:nth-child(5) {
+  transform: translate(390px, 520px);
+}
+.table .seat:nth-child(6) {
+  transform: translate(0px, 400px);
+}
+
 /* LiveView specific classes for your customizations */
 .invalid-feedback {
   color: #a94442;

@@ -18,3 +18,7 @@ Still a work in progress.
 * [ ] All-In handling
 * [ ] Split pots
 * [ ] CSS animations for cards
+* [ ] Reload game state from database on crash/server restart
+* [ ] Private/Public tables
+* [ ] Custom blinds
+* [ ] More than 6 player tables

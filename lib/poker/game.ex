@@ -5,21 +5,33 @@ defmodule Poker.Game do
   alias Poker.Game.Action
   alias Poker.Game.State
 
-  def start_link(%{players: _p, name: _n} = args) do
-    GenServer.start_link(__MODULE__, args, name: {:global, {:game, args.name}})
+  def start_link(%{players: _p, id: _n} = args) do
+    GenServer.start_link(__MODULE__, args, name: {:global, {:game, args.id}})
   end
 
   @impl true
-  def init(%{players: _p, name: _n} = args) do
+  def init(%{players: _p, id: _n} = args) do
     {:ok, Game.State.new(args)}
   end
 
-  def whereis(name) do
-    :global.whereis_name({:game, name})
+  def whereis(id) do
+    :global.whereis_name({:game, id})
   end
 
   def handle_action(pid, %Action{} = action) do
     GenServer.call(pid, {:handle_action, action})
+  end
+
+  def subscribe(pid) do
+    Phoenix.PubSub.subscribe(Poker.PubSub, "game_" <> id(pid))
+  end
+
+  def unsubscribe(pid) do
+    Phoenix.PubSub.unsubscribe(Poker.PubSub, "game_" <> id(pid))
+  end
+
+  def id(pid) do
+    GenServer.call(pid, :id)
   end
 
   def deck(pid) do
@@ -57,6 +69,11 @@ defmodule Poker.Game do
   @impl true
   def handle_call(:community_cards, _, state) do
     {:reply, state.community_cards, state}
+  end
+
+  @impl true
+  def handle_call(:id, _, state) do
+    {:reply, state.id, state}
   end
 
   @impl true
