@@ -1,4 +1,6 @@
 defmodule Poker.Game.State do
+  @derive {Inspect, except: [:deck]}
+
   defstruct [
     :id,
     :players,
@@ -7,7 +9,7 @@ defmodule Poker.Game.State do
     :bets,
     :pot,
     :available_actions,
-    :position,
+    :position, # NOTE: 0 == SB, 1 == BB, 5 == button in a 6 seater game
     :position_states,
     :actions,
     :phase,
@@ -216,10 +218,6 @@ defmodule Poker.Game.State do
     index
   end
 
-  def active_players(state) do
-    state.players |> Enum.reject(&(&1.cards == nil))
-  end
-
   def active_player_positions(state) do
     state.players
     |> Enum.with_index
@@ -228,14 +226,7 @@ defmodule Poker.Game.State do
   end
 
   defp build_players(players) do
-    Enum.map(players, fn player ->
-      %{
-        user_id: player[:user_id],
-        name: player[:name],
-        chips: player[:chips],
-        cards: {nil, nil}
-      }
-    end)
+    players |> Enum.map(fn player -> Map.put(player, :cards, {nil, nil}) end)
   end
 
   defp broadcast(state) do

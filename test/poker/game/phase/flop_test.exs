@@ -7,12 +7,12 @@ defmodule Poker.Game.Phase.FlopTest do
   def preflop_game(name, players) do
     {:ok, pid} = Game.start_link(%{id: name, players: players })
 
-    assert :ok = Game.handle_action(pid, Action.call(amount: 5, position: 0))
-    assert :ok = Game.handle_action(pid, Action.call(amount: 10, position: 1))
-    assert :ok = Game.handle_action(pid, Action.call(amount: 10, position: 2))
-    assert :ok = Game.handle_action(pid, Action.call(amount: 10, position: 3))
-    assert :ok = Game.handle_action(pid, Action.call(amount: 5, position: 0))
-    assert :ok = Game.handle_action(pid, Action.check(position: 1))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 5, position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 10, position: 1))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 10, position: 2))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 10, position: 3))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 5, position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Action.check(position: 1))
 
     pid
   end
@@ -29,11 +29,11 @@ defmodule Poker.Game.Phase.FlopTest do
   test "moves to turn when complete", %{players: players} do
     pid = preflop_game("flop community cards", players)
 
-    assert :ok = Game.handle_action(pid, Action.bet(amount: 50, position: 0))
-    assert :ok = Game.handle_action(pid, Action.bet(amount: 150, position: 1))
-    assert :ok = Game.handle_action(pid, Action.call(amount: 150, position: 2))
-    assert :ok = Game.handle_action(pid, Action.call(amount: 150, position: 3))
-    assert :ok = Game.handle_action(pid, Action.call(amount: 100, position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Action.bet(amount: 50, position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Action.bet(amount: 150, position: 1))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 150, position: 2))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 150, position: 3))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 100, position: 0))
 
     Game.state(pid)
     |> assert_phase(:turn)
@@ -43,10 +43,10 @@ defmodule Poker.Game.Phase.FlopTest do
   test "game ends if everyone but one player folds", %{players: players} do
     pid = preflop_game("flop winner", players)
 
-    assert :ok = Game.handle_action(pid, Action.bet(amount: 50, position: 0))
-    assert :ok = Game.handle_action(pid, Action.fold(position: 1))
-    assert :ok = Game.handle_action(pid, Action.fold(position: 2))
-    assert :ok = Game.handle_action(pid, Action.fold(position: 3))
+    assert {:ok, _} = Game.handle_action(pid, Action.bet(amount: 50, position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Action.fold(position: 1))
+    assert {:ok, _} = Game.handle_action(pid, Action.fold(position: 2))
+    assert {:ok, _} = Game.handle_action(pid, Action.fold(position: 3))
 
     Game.state(pid)
     |> assert_phase(:done)

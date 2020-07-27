@@ -123,7 +123,7 @@ defmodule Poker.Table do
 
       true ->
         seats = List.update_at(seats, index, fn(_) ->
-          %{user_id: user.id, name: user.name, chips: amount}
+          %{user_id: user.id, name: user.name, chips: amount, seat: index}
         end)
 
         :ok = Account.subtract_balance(user, amount)
@@ -195,11 +195,11 @@ defmodule Poker.Table do
 
     {:ok, pid} = GameSupervisor.start_game(state.seats |> gather_players(state.button))
 
-    Map.put(state, :current_game, Game.id(pid)) |> broadcast(:new_game)
+    Map.put(state, :current_game, Game.id(pid))
   end
 
   defp advance_button(state) do
-    state = Map.update!(state, :button, &(&1 + 1))
+    state = Map.update!(state, :button, &(rem(&1 + 1, 5)))
 
     case Enum.at(state.seats, state.button) do
       nil -> advance_button(state)

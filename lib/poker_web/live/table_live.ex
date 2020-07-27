@@ -4,6 +4,7 @@ defmodule PokerWeb.TableLive do
   alias Poker.Account
   alias Poker.Table
   alias Poker.Game
+  alias Poker.Game.Action
 
   @impl true
   def mount(params, %{"user_id" => id}, socket) do
@@ -35,7 +36,6 @@ defmodule PokerWeb.TableLive do
     <hr />
     <h1>Table: <%= @this.name %></h1>
 
-
     <div class='table'>
       <%= for {seat, i} <- Enum.with_index(@this.seats) do %>
         <%= live_component(
@@ -47,14 +47,17 @@ defmodule PokerWeb.TableLive do
         %>
       <% end %>
 
-      <div class='game'>
-        <%= live_component(
-          @socket,
-          PokerWeb.GameLive,
-          game: @current_game,
-          current_user: @user)
-        %>
-      </div>
+      <%= if @current_game do %>
+        <div class='game'>
+          <%= live_component(
+            @socket,
+            PokerWeb.GameLive,
+            id: @current_game.id,
+            game: @current_game,
+            current_user: @user)
+          %>
+        </div>
+      <% end %>
     </div>
     """
   end
@@ -72,6 +75,17 @@ defmodule PokerWeb.TableLive do
     end
   end
 
+  def handle_event("call", %{"value" => amount}, socket) do
+    pid = Game.whereis(socket.assigns[:current_game].id)
+    action = Action.call(
+      amount: String.to_integer(amount),
+      position: socket.assigns[:current_game].position
+    )
+    {:ok, game} = Game.handle_action(pid, action)
+
+    {:noreply, socket |> assign(:current_game, game)}
+  end
+
   @impl true
   def handle_info({:user_left, new_table_state}, socket) do
     {:noreply, socket |> assign(:this, new_table_state)}
@@ -83,12 +97,11 @@ defmodule PokerWeb.TableLive do
   end
 
   @impl true
-  def handle_info({:new_game, new_table_state}, socket) do
-    current_game =
-      Game.whereis(new_table_state.current_game)
-      |> Game.state
+  def handle_info({:new_game, game}, socket) do
+    game_pid = Game.whereis(game.current_game)
+    current_game = Game.state(game_pid)
 
-    Game.subscribe(current_game)
+    Game.subscribe(game_pid)
 
     {:noreply, socket |> assign(:current_game, current_game)}
   end

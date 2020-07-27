@@ -100,7 +100,10 @@ defmodule Poker.TableTest do
 
     assert Poker.Table.state(pid).button == 2
     assert Enum.at(state.players, 0).user_id == user2.id
+    assert Enum.at(state.players, 0).seat == 1
     assert Enum.at(state.players, 1).user_id == user3.id
+    assert Enum.at(state.players, 1).seat == 2
     assert Enum.at(state.players, 2).user_id == user1.id
+    assert Enum.at(state.players, 2).seat == 0
   end
 end

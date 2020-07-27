@@ -5,9 +5,10 @@ defmodule Poker.GameHelpers do
     if players = tags[:players] do
       players =
         players
-        |> Enum.map(fn {name, chips} ->
+        |> Enum.with_index
+        |> Enum.map(fn {{name, chips}, seat} ->
           {:ok, user} = Poker.Account.create_user(%{name: name, chips: chips})
-          %{user_id: user.id, name: name, chips: chips}
+          %{user_id: user.id, name: name, chips: chips, seat: seat}
         end)
 
       {:ok, players: players}

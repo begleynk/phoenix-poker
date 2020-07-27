@@ -20,25 +20,29 @@ defmodule Poker.GameTest do
                user_id: Enum.at(players, 0).user_id,
                name: "Phil",
                chips: 1000,
-               cards: {nil, nil}
+               cards: {nil, nil},
+               seat: 0,
              },
              %{
                user_id: Enum.at(players, 1).user_id,
                name: "Jane",
                chips: 1000,
-               cards: {nil, nil}
+               cards: {nil, nil},
+               seat: 1,
              },
              %{
                user_id: Enum.at(players, 2).user_id,
                name: "Bob",
                chips: 1000,
-               cards: {nil, nil}
+               cards: {nil, nil},
+               seat: 2,
              },
              %{
                user_id: Enum.at(players, 3).user_id,
                name: "Eve",
                chips: 1000,
-               cards: {nil, nil}
+               cards: {nil, nil},
+               seat: 3,
              }
            ]
   end
@@ -62,14 +66,14 @@ defmodule Poker.GameTest do
 
     assert Game.state(pid).available_actions == [{:call, 5}]
 
-    assert :ok = Game.handle_action(pid, Game.Action.call(amount: 5, position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Game.Action.call(amount: 5, position: 0))
 
     assert Game.pot(pid) == 0
     assert Game.bets(pid) == [5, 0, 0, 0]
     assert Game.position(pid) == 1
     assert Game.state(pid).available_actions == [{:call, 10}]
 
-    assert :ok = Game.handle_action(pid, Game.Action.call(amount: 10, position: 1))
+    assert {:ok, _} = Game.handle_action(pid, Game.Action.call(amount: 10, position: 1))
 
     assert Game.pot(pid) == 0
     assert Game.bets(pid) == [5, 10, 0, 0]

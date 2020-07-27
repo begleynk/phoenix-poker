@@ -114,7 +114,7 @@ defmodule Poker.Game do
   @impl true
   def handle_call({:handle_action, action}, _, state) do
     case state |> State.handle_action(action) do
-      {:ok, new_state} -> {:reply, :ok, new_state}
+      {:ok, new_state} -> {:reply, {:ok, new_state}, new_state}
       {:error, msg} -> {:reply, {:error, msg}, state}
     end
   end
