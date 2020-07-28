@@ -12,8 +12,8 @@ Still a work in progress.
 
 ## TODO
 
-* [ ] Proof of concept game UI
-  * [ ] PubSub broadcast of game state changes
+* [x] Proof of concept game UI
+  * [x] PubSub broadcast of game state changes
   * [ ] Hook up Phoenix presence to detect user disconnects
 * [ ] All-In handling
 * [ ] Split pots
