@@ -178,6 +178,17 @@ defmodule Poker.Table do
     end
   end
 
+  @impl true
+  def handle_info({:game_state, %Game.State{id: game_id, phase: :done} = game_state}, %{current_game: game_id} = state) do
+    # Resolve chips
+    {:noreply, state |> update_chip_counts(game_state)}
+  end
+
+  @impl true
+  def handle_info({:game_state, _}, state) do
+    {:noreply, state}
+  end
+
   defp balance_too_low(user, amount) do
     Account.balance(user) < amount
   end
@@ -194,8 +205,25 @@ defmodule Poker.Table do
     state = advance_button(state)
 
     {:ok, pid} = GameSupervisor.start_game(state.seats |> gather_players(state.button))
+    Game.subscribe(pid)
 
     Map.put(state, :current_game, Game.id(pid))
+  end
+
+  defp update_chip_counts(table_state, %Game.State{phase: :done, players: players}) do
+    Map.update!(table_state, :seats, fn(seats) ->
+      seats
+      |> Enum.with_index
+      |> Enum.reject(fn({s,_}) -> s == nil end)
+      |> Enum.map(fn({seat, index}) ->
+          new_chips = case Enum.find_index(players, &(&1.seat == index)) do
+            nil -> seat.chips
+            some -> Enum.at(players, some).chips
+          end
+
+          %{seat | chips: new_chips}
+        end)
+      end)
   end
 
   defp advance_button(state) do

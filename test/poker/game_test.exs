@@ -2,6 +2,7 @@ defmodule Poker.GameTest do
   use Poker.GameCase
 
   alias Poker.Game
+  alias Poker.Game.Action
 
   @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
   test "the game starts with players posting blinds", %{players: players} do
@@ -84,5 +85,27 @@ defmodule Poker.GameTest do
     end)
 
     Game.state(pid) |> assert_available_actions([:bet, {:call, 10}, :fold])
+  end
+
+  @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
+  test "game ends if all but one player folds", %{players: players} do
+    {:ok, pid} = Game.start_link(%{id: "game_ends_on_folds", players: players })
+
+    # Preflop
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 5, position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 10, position: 1))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 10, position: 2))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 10, position: 3))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 5, position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Action.check(position: 1))
+
+    # All but button fold on flop
+    assert {:ok, _} = Game.handle_action(pid, Action.fold(position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Action.fold(position: 1))
+    assert {:ok, _} = Game.handle_action(pid, Action.fold(position: 2))
+
+    Game.state(pid)
+    |> assert_phase(:done)
+    |> assert_winner(3)
   end
 end

@@ -19,7 +19,9 @@ defmodule Poker.Game.Phase.Preflop do
       position: 0, # Button is the last position. 0 == small blind, 1 == big blind, etc.
       position_states: List.duplicate(:active, length(players)),
       actions: [],
-    } |> AvailableActions.compute
+    }
+    |> move_bets_to_pot
+    |> AvailableActions.compute
   end
 
   @impl true

@@ -22,6 +22,11 @@ defmodule Poker.GameHelpers do
     state
   end
 
+  def assert_bets(%Poker.Game.State{bets: bets} = state, expected) do
+    assert bets == expected #, "Bets did not match expected"
+    state
+  end
+
   def assert_community_card_count(%Poker.Game.State{community_cards: cards} = state, count) do
     assert length(cards) == count
     state
@@ -57,6 +62,11 @@ defmodule Poker.GameHelpers do
 
   def assert_winner(%Poker.Game.State{winner: winner_pos} = state, expected) do
     assert winner_pos == expected
+    state
+  end
+
+  def assert_has_winner(%Poker.Game.State{winner: winner_pos} = state) do
+    assert winner_pos != nil, "No winner was computed"
     state
   end
 end

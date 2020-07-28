@@ -164,7 +164,8 @@ defmodule Poker.Game.State do
       :flop -> Phase.Flop.transition(state, action)
       :turn -> Phase.Turn.transition(state, action)
       :river -> Phase.River.transition(state, action)
-      _ -> raise "Unimplemented phase"
+      :done -> Phase.Done.transition(state, action)
+      _ -> raise "Unimplemented phase '#{state.phase}'"
     end
   end
 
@@ -216,6 +217,21 @@ defmodule Poker.Game.State do
       |> Enum.find(fn({_s, i}) -> !has_folded?(state, i) end)
 
     index
+  end
+
+  def hand_ranks(state) do
+    Enum.map(state.players, fn(%{cards: {l,r}}) ->
+      Poker.HandRank.determine_best_hand([l, r | state.community_cards])
+    end)
+  end
+
+  def compute_winner_based_on_hand_rank(state) do
+    state
+    |> hand_ranks
+    |> Enum.with_index
+    |> Enum.sort_by(fn({rank, _}) -> rank end, Poker.HandRank)
+    |> Enum.map(fn({_, index}) -> index end)
+    |> Enum.at(0)
   end
 
   def active_player_positions(state) do

@@ -42,6 +42,12 @@ defmodule Poker.Game.Phase do
         |> State.fold_player(pos)
         |> State.advance_position()
       end
+
+      def move_bets_to_pot(state) do
+        state
+        |> Map.update!(:pot, fn(pot) -> pot + Enum.sum(state.bets) end)
+        |> Map.put(:bets, List.duplicate(0, length(state.players)))
+      end
     end
   end
 end

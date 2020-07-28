@@ -52,4 +52,17 @@ defmodule Poker.Game.Phase.FlopTest do
     |> assert_phase(:done)
     |> assert_winner(0)
   end
+
+  @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
+  test "it moves the bets to the pot at the end of the turn", %{players: players} do
+    pid = preflop_game("flop winner", players)
+
+    assert {:ok, _} = Game.handle_action(pid, Action.bet(amount: 150, position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 150, position: 1))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 150, position: 2))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 150, position: 3))
+
+    Game.state(pid)
+    |> assert_pot(150 + 150 + 150 + 150 + 40)
+  end
 end

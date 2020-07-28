@@ -36,6 +36,14 @@ defmodule Poker.HandRank do
     |> compute_score
   end
 
+  def compare(%HandRank{} = same, %HandRank{} = same), do: :eq
+  def compare(%HandRank{} = left, %HandRank{} = right) do
+    case compare([left, right]) do
+      [^left, ^right] -> :lt
+      [^right, ^left] -> :gt
+    end
+  end
+
   def compare(ranks) do
     ranks
     |> group_by_types

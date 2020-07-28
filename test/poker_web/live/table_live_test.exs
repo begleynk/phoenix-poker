@@ -37,7 +37,7 @@ defmodule PokerWeb.TableLiveTest do
     {:ok, view, html} = live(conn, Routes.table_path(conn, :show, "table_live_test2"))
 
     assert html =~ "Sit"
-    assert html =~ "Seat 1: Empty"
+    assert html =~ "Empty"
 
     view
     |> element("button[value='1']", "Sit")

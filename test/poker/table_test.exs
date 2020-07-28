@@ -1,7 +1,9 @@
 defmodule Poker.TableTest do
-  use Poker.DataCase
+  use Poker.GameCase
 
   alias Poker.Account
+  alias Poker.Game
+  alias Poker.Game.Action
 
   test "it has a name" do
     name = "the name"
@@ -95,7 +97,6 @@ defmodule Poker.TableTest do
     assert :ok = Poker.Table.sit(pid, user3, index: 2, amount: 1000)
 
     Poker.Table.start_game(pid)
-
     state = Poker.Game.whereis(Poker.Table.state(pid).current_game) |> Poker.Game.state
 
     assert Poker.Table.state(pid).button == 2
@@ -105,5 +106,47 @@ defmodule Poker.TableTest do
     assert Enum.at(state.players, 1).seat == 2
     assert Enum.at(state.players, 2).user_id == user1.id
     assert Enum.at(state.players, 2).seat == 0
+  end
+
+  test "it reconciles the pots of players once the game finishes" do
+    {:ok, user1} = Account.create_user(%{name: "Bob"})
+    {:ok, user2} = Account.create_user(%{name: "Alice"})
+    {:ok, user3} = Account.create_user(%{name: "Jane"})
+
+    {:ok, pid} = Poker.Table.start_link(%{name: "reconciliation_table"})
+    :ok = Poker.Table.disable_auto_start(pid)
+    :ok = Poker.Table.set_button(pid, 2)
+
+    assert :ok = Poker.Table.sit(pid, user1, index: 0, amount: 1000)
+    assert :ok = Poker.Table.sit(pid, user2, index: 1, amount: 1000)
+    assert :ok = Poker.Table.sit(pid, user3, index: 2, amount: 1000)
+
+    Poker.Table.start_game(pid)
+    game_pid = Poker.Game.whereis(Poker.Table.state(pid).current_game)
+
+    # Preflop
+    assert {:ok, _} = Game.handle_action(game_pid, Action.call(amount: 5, position: 0))
+    assert {:ok, _} = Game.handle_action(game_pid, Action.call(amount: 10, position: 1))
+    assert {:ok, _} = Game.handle_action(game_pid, Action.bet(amount: 50, position: 2))
+    assert {:ok, _} = Game.handle_action(game_pid, Action.call(amount: 45, position: 0))
+    assert {:ok, _} = Game.handle_action(game_pid, Action.call(amount: 40, position: 1))
+
+    # All but button fold on flop
+    assert {:ok, _} = Game.handle_action(game_pid, Action.check(position: 0))
+    assert {:ok, _} = Game.handle_action(game_pid, Action.check(position: 1))
+    assert {:ok, _} = Game.handle_action(game_pid, Action.bet(amount: 500, position: 2))
+    assert {:ok, _} = Game.handle_action(game_pid, Action.fold(position: 0))
+    assert {:ok, _} = Game.handle_action(game_pid, Action.fold(position: 1))
+
+    Game.state(game_pid)
+    |> assert_phase(:done)
+    |> assert_winner(2)
+    |> assert_pot(0)
+    |> assert_bets([0,0,0])
+
+    players = Poker.Table.state(pid).seats
+    assert Enum.at(players, 0).chips == 950
+    assert Enum.at(players, 1).chips == 950
+    assert Enum.at(players, 2).chips == 1100
   end
 end

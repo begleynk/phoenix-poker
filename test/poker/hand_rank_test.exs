@@ -358,4 +358,15 @@ defmodule Poker.HandRankTest do
 
     assert HandRank.compare([a, c, b]) == [b, a, c]
   end
+
+  test "hand ranks can be sorted correctly" do
+    a = %HandRank{type: :high_card, cards: [1, 7, 6, 5, 4]}
+    b = %HandRank{type: :flush, cards: [8, 7, 5, 4, 3]}
+    c = %HandRank{type: :straight, cards: [9, 8, 7, 6, 5]}
+    d = %HandRank{type: :straight, cards: [9, 8, 7, 6, 5]}
+    e = %HandRank{type: :full_house, cards: [1, 1, 1, 5, 5]}
+    f = %HandRank{type: :pair, cards: [5, 13, 11, 7]}
+
+    assert Enum.sort([a, b, c, d, e, f], HandRank) == [e, b, d, c, f, a]
+  end
 end

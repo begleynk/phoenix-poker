@@ -11,6 +11,7 @@ defmodule Poker.Game.Phase.Flop do
     state
     |> Map.put(:phase, :flop)
     |> Map.put(:position, 0)
+    |> move_bets_to_pot
     |> deal_community_cards
     |> State.reset_states
   end

@@ -11,6 +11,7 @@ defmodule Poker.Game.Phase.Turn do
     state
     |> Map.put(:phase, :turn)
     |> Map.put(:position, 0)
+    |> move_bets_to_pot
     |> deal_single_community_card
     |> State.reset_states
   end
