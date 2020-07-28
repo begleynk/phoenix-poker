@@ -2,6 +2,7 @@ defmodule PokerWeb.GameLive do
   use PokerWeb, :live_component
 
   alias Poker.Game
+  alias Poker.Card
 
   def render(%{game: %Game.State{}, current_user: _user} = assigns) do
     ~L"""
@@ -13,6 +14,12 @@ defmodule PokerWeb.GameLive do
       &nbsp&nbsp
       Pot: <%= @game.pot %>
     </p>
+
+    <h1>
+      <%= for card <- @game.community_cards do %>
+        <%= Card.render(card) %>
+      <% end %>
+    </h1>
 
     <%= if my_turn?(@game, @current_user) do %>
       <%= action_buttons(assigns)  %>
@@ -26,12 +33,12 @@ defmodule PokerWeb.GameLive do
       <%= case action do %>
         <% {:call, amount} -> %>
           <button phx-click="call" value="<%= amount %>">Call <%= amount %></button>
-        <% :bet -> %>
-          <button value="bet">Bet</button>
         <% :fold -> %>
           <button value="fold">Fold</button>
         <% :check -> %>
-          <button value="check">Check</button>
+          <button phx-click="check">Check</button>
+        <% :bet -> %>
+          <button value="bet">Bet</button>
       <% end %>
     <% end %>
     """

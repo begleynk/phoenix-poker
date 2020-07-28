@@ -37,17 +37,18 @@ defmodule PokerWeb.TableLive do
     <h1>Table: <%= @this.name %></h1>
 
     <div class='table'>
-      <%= for {seat, i} <- Enum.with_index(@this.seats) do %>
-        <%= live_component(
-          @socket,
-          PokerWeb.SeatLive,
-          id: i + 1,
-          seat: seat,
-          user_seated: current_user_sitting?(@this.seats, @user))
-        %>
-      <% end %>
-
       <%= if @current_game do %>
+        <%= for {seat, i} <- Enum.with_index(@this.seats) do %>
+          <%= live_component(
+            @socket,
+            PokerWeb.SeatLive,
+            id: i + 1,
+            is_current_user: seat != nil && seat.user_id == @user.id,
+            seat: sitting_player(@current_game.players, i),
+            user_seated: current_user_sitting?(@this.seats, @user))
+          %>
+        <% end %>
+
         <div class='game'>
           <%= live_component(
             @socket,
@@ -57,6 +58,17 @@ defmodule PokerWeb.TableLive do
             current_user: @user)
           %>
         </div>
+      <% else %>
+        <%= for {seat, i} <- Enum.with_index(@this.seats) do %>
+          <%= live_component(
+            @socket,
+            PokerWeb.SeatLive,
+            id: i + 1,
+            seat: seat,
+            is_current_user: seat != nil && seat.user_id == @user.id,
+            user_seated: current_user_sitting?(@this.seats, @user))
+          %>
+        <% end %>
       <% end %>
     </div>
     """
@@ -79,6 +91,16 @@ defmodule PokerWeb.TableLive do
     pid = Game.whereis(socket.assigns[:current_game].id)
     action = Action.call(
       amount: String.to_integer(amount),
+      position: socket.assigns[:current_game].position
+    )
+    {:ok, game} = Game.handle_action(pid, action)
+
+    {:noreply, socket |> assign(:current_game, game)}
+  end
+
+  def handle_event("check", _, socket) do
+    pid = Game.whereis(socket.assigns[:current_game].id)
+    action = Action.check(
       position: socket.assigns[:current_game].position
     )
     {:ok, game} = Game.handle_action(pid, action)
@@ -116,5 +138,11 @@ defmodule PokerWeb.TableLive do
     |> Enum.reject(&(&1 == nil))
     |> Enum.map(&(&1.user_id))
     |> Enum.member?(user.id)
+  end
+
+  def sitting_player(seats, seat_index) do
+    Enum.find(seats, fn(seat) -> 
+      seat.seat == seat_index
+    end)
   end
 end
