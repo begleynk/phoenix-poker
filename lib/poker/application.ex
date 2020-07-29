@@ -17,6 +17,8 @@ defmodule Poker.Application do
       PokerWeb.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, name: Poker.PubSub},
+      # Start the presence system
+      PokerWeb.Presence,
       # Start the Endpoint (http/https)
       PokerWeb.Endpoint
       # Start a worker by calling: Poker.Worker.start_link(arg)

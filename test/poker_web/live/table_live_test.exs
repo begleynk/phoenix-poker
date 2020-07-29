@@ -46,4 +46,32 @@ defmodule PokerWeb.TableLiveTest do
     refute render(view) =~ "Seat 1: Empty"
     refute render(view) =~ "Sit"
   end
+
+  @tag login_as: "Phil"
+  test "receives a presence diff event when a user visits the table page", %{conn: conn, user: %{ id: user_id }} do
+    {:ok, table} = Lobby.create_table("table_live_test3")
+    state = Table.state(table)
+
+    PokerWeb.Endpoint.subscribe(Table.presence_topic(state))
+
+    {:ok, _view, _html} = live(conn, Routes.table_path(conn, :show, "table_live_test3"))
+
+    user_id = "#{user_id}"
+    assert_receive %{
+      event: "presence_diff",
+      payload: %{
+        joins: %{
+          ^user_id => _
+        }
+      }
+    }
+    refute_receive %{
+      event: "presence_diff",
+      payload: %{
+        leaves: %{
+          ^user_id => _
+        }
+      }
+    }
+  end
 end

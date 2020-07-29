@@ -5,6 +5,7 @@ defmodule PokerWeb.TableLive do
   alias Poker.Table
   alias Poker.Game
   alias Poker.Game.Action
+  alias PokerWeb.Presence
 
   @impl true
   def mount(params, %{"user_id" => id}, socket) do
@@ -16,11 +17,8 @@ defmodule PokerWeb.TableLive do
       |> assign(:user, Account.get_user!(id))
       |> assign(:pid, pid)
       |> assign(:this, Table.state(pid))
-
-    socket = case Table.current_game(pid) do
-      nil -> assign(socket, :current_game, nil)
-      id  -> assign(socket, :current_game, Game.whereis(id) |> Game.state)
-    end
+      |> fetch_current_game
+      |> setup_presence
 
     {:ok, socket}
   end
@@ -71,6 +69,13 @@ defmodule PokerWeb.TableLive do
         <% end %>
       <% end %>
     </div>
+
+    <hr />
+    <br />
+    <br />
+    <%= for seat <- @viewers do %>
+      <%= inspect seat %>
+    <% end %>
     """
   end
 
@@ -82,7 +87,15 @@ defmodule PokerWeb.TableLive do
            index: String.to_integer(seat) - 1,
            amount: 1000
          ) do
-      :ok -> {:noreply, socket}
+      :ok ->
+        Presence.update(
+          self(),
+          presence_topic(socket.assigns.this),
+          socket.assigns.user.id,
+          fn(m) -> %{ m | seat: String.to_integer(seat) } end
+        )
+
+        {:noreply, socket}
       {:error, msg} -> {:noreply, socket |> put_flash(:error, msg)}
     end
   end
@@ -133,6 +146,15 @@ defmodule PokerWeb.TableLive do
     {:noreply, socket |> assign(:current_game, new_game_state)}
   end
 
+  @doc """
+  This function gets invoked when a change has been detected in the player
+  presence information by Phoenix Presence.
+  """
+  @impl true
+  def handle_info(%{event: "presence_diff", payload: %{joins: _joins, leaves: _leaves}} = diff, socket) do
+    {:noreply, assign(socket, :viewers, Presence.list(presence_topic(socket.assigns.this)))}
+  end
+
   def current_user_sitting?(seats, user) do
     seats
     |> Enum.reject(&(&1 == nil))
@@ -144,5 +166,32 @@ defmodule PokerWeb.TableLive do
     Enum.find(seats, fn(seat) -> 
       seat.seat == seat_index
     end)
+  end
+
+  def fetch_current_game(socket) do
+    case Table.current_game(socket.assigns.pid) do
+      nil -> assign(socket, :current_game, nil)
+      id  -> assign(socket, :current_game, Game.whereis(id) |> Game.state)
+    end
+  end
+
+  def setup_presence(socket) do
+    {:ok, _} = Presence.track(
+      self(), 
+      presence_topic(socket.assigns.this),
+      socket.assigns.user.id,
+      default_presence_assigns()
+    )
+    PokerWeb.Endpoint.subscribe(presence_topic(socket.assigns.this))
+
+    assign(socket, :viewers, Presence.list(presence_topic(socket.assigns.this)))
+  end
+
+  def presence_topic(table) do
+    Table.presence_topic(table)
+  end
+
+  def default_presence_assigns do
+    %{seat: nil}
   end
 end

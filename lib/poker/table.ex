@@ -189,6 +189,10 @@ defmodule Poker.Table do
     {:noreply, state}
   end
 
+  def presence_topic(state) do
+    "table:" <> state.name <> ":players"
+  end
+
   defp balance_too_low(user, amount) do
     Account.balance(user) < amount
   end
@@ -235,7 +239,7 @@ defmodule Poker.Table do
     end
   end
 
-  def gather_players(players, button) do
+  defp gather_players(players, button) do
     players
     |> Enum.reject(&(&1 == nil))
     |> Enum.reverse
@@ -243,8 +247,8 @@ defmodule Poker.Table do
     |> Enum.reverse
   end
 
-  def rotate(list, times) when times == 0, do: list
-  def rotate([head | list], times) do
+  defp rotate(list, times) when times == 0, do: list
+  defp rotate([head | list], times) do
     rotate(list ++ [head], times - 1)
   end
 
