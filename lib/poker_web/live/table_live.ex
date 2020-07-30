@@ -18,6 +18,7 @@ defmodule PokerWeb.TableLive do
       |> assign(:pid, pid)
       |> assign(:this, Table.state(pid))
       |> fetch_current_game
+      |> subscribe_to_game
       |> setup_presence
 
     {:ok, socket}
@@ -43,7 +44,10 @@ defmodule PokerWeb.TableLive do
             id: i + 1,
             is_current_user: seat != nil && seat.user_id == @user.id,
             seat: sitting_player(@current_game.players, i),
-            user_seated: current_user_sitting?(@this.seats, @user))
+            user_seated: current_user_sitting?(@this.seats, @user),
+            can_leave: false,
+            active_turn: action_on_player?(@current_game, i)
+          )
           %>
         <% end %>
 
@@ -64,7 +68,10 @@ defmodule PokerWeb.TableLive do
             id: i + 1,
             seat: seat,
             is_current_user: seat != nil && seat.user_id == @user.id,
-            user_seated: current_user_sitting?(@this.seats, @user))
+            user_seated: current_user_sitting?(@this.seats, @user),
+            can_leave: true,
+            active_turn: false
+          )
           %>
         <% end %>
       <% end %>
@@ -93,6 +100,22 @@ defmodule PokerWeb.TableLive do
           presence_topic(socket.assigns.this),
           socket.assigns.user.id,
           fn(m) -> %{ m | seat: String.to_integer(seat) } end
+        )
+
+        {:noreply, socket}
+      {:error, msg} -> {:noreply, socket |> put_flash(:error, msg)}
+    end
+  end
+
+  @impl true
+  def handle_event("leave", _, socket) do
+    case Table.leave(socket.assigns[:pid], socket.assigns.user) do
+      :ok ->
+        Presence.update(
+          self(),
+          presence_topic(socket.assigns.this),
+          socket.assigns.user.id,
+          fn(m) -> %{ m | seat: nil } end
         )
 
         {:noreply, socket}
@@ -151,7 +174,7 @@ defmodule PokerWeb.TableLive do
   presence information by Phoenix Presence.
   """
   @impl true
-  def handle_info(%{event: "presence_diff", payload: %{joins: _joins, leaves: _leaves}} = diff, socket) do
+  def handle_info(%{event: "presence_diff", payload: %{joins: _joins, leaves: _leaves}}, socket) do
     {:noreply, assign(socket, :viewers, Presence.list(presence_topic(socket.assigns.this)))}
   end
 
@@ -180,7 +203,7 @@ defmodule PokerWeb.TableLive do
       self(), 
       presence_topic(socket.assigns.this),
       socket.assigns.user.id,
-      default_presence_assigns()
+      current_user_presence(socket)
     )
     PokerWeb.Endpoint.subscribe(presence_topic(socket.assigns.this))
 
@@ -191,7 +214,28 @@ defmodule PokerWeb.TableLive do
     Table.presence_topic(table)
   end
 
-  def default_presence_assigns do
-    %{seat: nil}
+  def current_user_presence(socket) do
+    case Enum.find_index(
+      socket.assigns.this.seats,
+      &(&1 != nil && &1.user_id == socket.assigns.user.id)) do
+      nil -> %{ seat: nil }
+      index -> %{ seat: index + 1}
+    end
+  end
+
+  def subscribe_to_game(socket) do
+    case socket.assigns.current_game do
+      nil -> socket
+      game ->
+        Game.whereis(game.id) |> Game.subscribe
+        socket
+    end
+  end
+
+  def action_on_player?(game, seat_index) do
+    case Enum.at(game.players, game.position) do
+      nil -> false
+      %{seat: seat} -> seat == seat_index
+    end
   end
 end

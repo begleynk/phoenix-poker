@@ -140,7 +140,7 @@ defmodule Poker.Table do
       index = state |> position_of(user)
       %{chips: remaining_chips} = Enum.at(seats, index)
 
-      seats = List.insert_at(seats, index, nil)
+      seats = List.update_at(seats, index, fn(_) -> nil end)
 
       :ok = Account.add_balance(user, remaining_chips)
 

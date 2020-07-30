@@ -120,6 +120,8 @@ defmodule PokerWeb.GameLiveTest do
     assert html =~ Poker.Card.render(left)
     assert html =~ Poker.Card.render(right)
 
+    assert has_element?(view, "div.seat.active-turn")
+
     view
     |> element("button", "Call")
     |> render_click()

@@ -22,7 +22,7 @@ defmodule PokerWeb.SeatLive do
 
   def render(%{id: _, seat: %{cards: {%Card{} = l, %Card{} = r}}} = assigns) do
     ~L"""
-    <div class="seat">
+    <div class="seat <%= if @active_turn, do: 'active-turn', else: '' %>">
       <h3><%= @seat.name %><br /> <%= @seat.chips %> chips</h3>
       <%= if @is_current_user do %>
         <h1><%= Card.render(l) %><%= Card.render(r) %></h1>
@@ -35,8 +35,11 @@ defmodule PokerWeb.SeatLive do
 
   def render(%{id: _, seat: _} = assigns) do
     ~L"""
-    <div class="seat">
+    <div class="seat <%= if @active_turn, do: 'active-turn', else: '' %>">
       <h3><%= @seat.name %>, <%= @seat.chips %> chips</h3>
+      <%= if @can_leave do %>
+        <button phx-click='leave' value='<%= @id %>'>Leave</button>
+      <% end %>
     </div>
     """
   end

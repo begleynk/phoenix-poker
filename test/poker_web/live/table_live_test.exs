@@ -74,4 +74,35 @@ defmodule PokerWeb.TableLiveTest do
       }
     }
   end
+
+  @tag login_as: "Phil"
+  test "it shows the 'leave' buttons which can be used to leave the table", %{conn: conn, user: %{id: user_id}} do
+    {:ok, table} = Lobby.create_table("table_live_test4")
+
+    {:ok, view, _html} = live(conn, Routes.table_path(conn, :show, "table_live_test4"))
+
+    view
+    |> element("button[value='1']", "Sit")
+    |> render_click()
+
+    assert [%{},nil,nil,nil,nil,nil] = Table.seats(table)
+    assert render(view) =~ "Leave"
+
+    view
+    |> element("button", "Leave")
+    |> render_click()
+
+    assert Table.seats(table) == [nil,nil,nil,nil,nil,nil]
+    assert render(view) =~ "Sit"
+    assert render(view) =~ "Empty"
+    user_id = "#{user_id}"
+    assert_receive %{
+      event: "presence_diff",
+      payload: %{
+        leaves: %{
+          ^user_id => _
+        }
+      }
+    }
+  end
 end
