@@ -145,6 +145,7 @@ defmodule Poker.TableTest do
     |> assert_bets([0,0,0])
 
     players = Poker.Table.state(pid).seats
+    assert length(players) == 6
     assert Enum.at(players, 0).chips == 950
     assert Enum.at(players, 1).chips == 950
     assert Enum.at(players, 2).chips == 1100

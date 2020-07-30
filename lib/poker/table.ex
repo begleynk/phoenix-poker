@@ -218,14 +218,17 @@ defmodule Poker.Table do
     Map.update!(table_state, :seats, fn(seats) ->
       seats
       |> Enum.with_index
-      |> Enum.reject(fn({s,_}) -> s == nil end)
       |> Enum.map(fn({seat, index}) ->
-          new_chips = case Enum.find_index(players, &(&1.seat == index)) do
-            nil -> seat.chips
-            some -> Enum.at(players, some).chips
-          end
+          case seat do
+            nil -> seat
+            _ ->
+              new_chips = case Enum.find_index(players, &(&1.seat == index)) do
+                nil -> seat.chips
+                some -> Enum.at(players, some).chips
+              end
 
-          %{seat | chips: new_chips}
+              %{seat | chips: new_chips}
+          end
         end)
       end)
   end
