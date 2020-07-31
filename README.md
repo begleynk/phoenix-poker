@@ -15,10 +15,22 @@ Still a work in progress.
 * [x] Proof of concept game UI
   * [x] PubSub broadcast of game state changes
   * [ ] Hook up Phoenix presence to detect user disconnects
+* [ ] Fully implement games flowing from game to game
+* [ ] UI Improvements
+  * [ ] Show active bets on table
+  * [ ] Move to SVG/CSS/Image cards, because some browsers/fonts don't support Unicode cards
+  * [ ] Show the winning hand/winner more prominently
+* [ ] Reload game state from database on crash/server restart
+  * [x] Persist tables
+  * [ ] Persist games
+  * [ ] Persist game actions
+* [ ] Action Timers - timeout inactive users
 * [ ] All-In handling
 * [ ] Split pots
+
+## Future features
+
 * [ ] CSS animations for cards
-* [ ] Reload game state from database on crash/server restart
 * [ ] Private/Public tables
 * [ ] Custom blinds
 * [ ] More than 6 player tables

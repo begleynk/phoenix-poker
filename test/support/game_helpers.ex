@@ -69,4 +69,9 @@ defmodule Poker.GameHelpers do
     assert winner_pos != nil, "No winner was computed"
     state
   end
+
+  def assert_min_bet(%Poker.Game.State{} = state, expected) do
+    assert Poker.Game.State.min_bet(state) == expected
+    state
+  end
 end

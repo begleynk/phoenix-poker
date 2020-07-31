@@ -144,6 +144,17 @@ defmodule PokerWeb.TableLive do
     {:noreply, socket |> assign(:current_game, game)}
   end
 
+  def handle_event("bet", %{"value" => amount}, socket) do
+    pid = Game.whereis(socket.assigns[:current_game].id)
+    action = Action.bet(
+      amount: String.to_integer(amount),
+      position: socket.assigns[:current_game].position
+    )
+    {:ok, game} = Game.handle_action(pid, action)
+
+    {:noreply, socket |> assign(:current_game, game)}
+  end
+
   @impl true
   def handle_info({:user_left, new_table_state}, socket) do
     {:noreply, socket |> assign(:this, new_table_state)}

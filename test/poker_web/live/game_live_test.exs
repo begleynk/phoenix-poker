@@ -138,4 +138,73 @@ defmodule PokerWeb.GameLiveTest do
       assert html =~ Poker.Card.render(card), "Community card #{Poker.Card.render(card)} not found"
     end
   end
+
+  @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
+  @tag login_as: "Phil"
+  test "it allows a user to change how much they bet", %{players: players, conn: conn, user: user0} do
+    user1 = Account.get_user!(Enum.at(players, 1).user_id)
+    user2 = Account.get_user!(Enum.at(players, 2).user_id)
+    user3 = Account.get_user!(Enum.at(players, 3).user_id)
+
+    {:ok, table} = Lobby.create_table("game_live_test5")
+    Table.disable_auto_start(table)
+    Table.set_button(table, 3)
+
+    assert :ok = Table.sit(table, user0, index: 0, amount: 1000)
+    assert :ok = Table.sit(table, user1, index: 1, amount: 1000)
+    assert :ok = Table.sit(table, user2, index: 2, amount: 1000)
+    assert :ok = Table.sit(table, user3, index: 3, amount: 1000)
+
+    :ok = Table.start_game(table)
+    game = Game.whereis(Table.current_game(table))
+
+    {:ok, view, _html} = live(conn, Routes.table_path(conn, :show, "game_live_test5"))
+
+    view
+    |> element("button", "Call")
+    |> render_click()
+    {:ok, _} = Game.handle_action(game, Action.call(amount: 10, position: 1))
+    {:ok, _} = Game.handle_action(game, Action.call(amount: 10, position: 2))
+    {:ok, _} = Game.handle_action(game, Action.call(amount: 10, position: 3))
+    {:ok, _} = Game.handle_action(game, Action.call(amount: 5, position: 0))
+    {:ok, _} = Game.handle_action(game, Action.check(position: 1))
+
+    assert has_element?(view, "#bet-amount-selector")
+    assert has_element?(view, "button", "Bet")
+
+    view
+    |> element("button", "Bet 10")
+    |> render_click()
+
+    assert Game.state(game).position == 1
+    assert Game.bets(game) == [10,0,0,0]
+  end
+
+  @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
+  @tag login_as: "Phil"
+  test "if another user has already bet, the player can 'raise' instead of 'bet'", %{players: players, conn: conn, user: user0} do
+    user1 = Account.get_user!(Enum.at(players, 1).user_id)
+    user2 = Account.get_user!(Enum.at(players, 2).user_id)
+    user3 = Account.get_user!(Enum.at(players, 3).user_id)
+
+    {:ok, table} = Lobby.create_table("game_live_test6")
+    Table.disable_auto_start(table)
+    Table.set_button(table, 3)
+
+    assert :ok = Table.sit(table, user1, index: 0, amount: 1000)
+    assert :ok = Table.sit(table, user2, index: 1, amount: 1000)
+    assert :ok = Table.sit(table, user3, index: 2, amount: 1000)
+    assert :ok = Table.sit(table, user0, index: 3, amount: 1000)
+
+    :ok = Table.start_game(table)
+    game = Game.whereis(Table.current_game(table))
+
+    {:ok, view, _html} = live(conn, Routes.table_path(conn, :show, "game_live_test6"))
+    {:ok, _} = Game.handle_action(game, Action.call(amount: 5, position: 0))
+    {:ok, _} = Game.handle_action(game, Action.call(amount: 10, position: 1))
+    {:ok, _} = Game.handle_action(game, Action.call(amount: 10, position: 2))
+
+    assert has_element?(view, "#bet-amount-selector")
+    assert has_element?(view, "button", "Raise 20")
+  end
 end

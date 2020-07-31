@@ -178,6 +178,14 @@ defmodule Poker.Game.State do
     end
   end
 
+  def min_bet(state) do
+    if Enum.all?(state.bets, &(&1 == 0)) do
+      10
+    else
+      highest_bet(state) * 2
+    end
+  end
+
   def bet_matched?(state, position) do
     to_call(state, position) == 0
   end

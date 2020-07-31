@@ -65,4 +65,19 @@ defmodule Poker.Game.Phase.FlopTest do
     Game.state(pid)
     |> assert_pot(150 + 150 + 150 + 150 + 40)
   end
+
+  @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
+  test "it verifies the minimum bet is the big blind if no other bets are made", %{players: players} do
+    pid = preflop_game("minimum_bet_no_other_bets", players)
+
+    Game.state(pid) |> assert_min_bet(10)
+  end
+
+  @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
+  test "it verifies the minimum bet is 2x the biggest bet if other bets were made", %{players: players} do
+    pid = preflop_game("minimum_bet_no_other_bets", players)
+    assert {:ok, _} = Game.handle_action(pid, Action.bet(amount: 150, position: 0))
+
+    Game.state(pid) |> assert_min_bet(300)
+  end
 end

@@ -98,4 +98,14 @@ defmodule Poker.Game.Phase.PreflopTest do
 
     Game.state(pid) |> assert_phase(:flop)
   end
+
+  @tag players: [{"Phil", 1000}, {"Jane", 1000}, {"Bob", 1000}, {"Eve", 1000}]
+  test "it checks the minimum bet is 2x big blinds preflop", %{players: players} do
+    {:ok, pid} = Game.start_link(%{id: "preflop_folding", players: players })
+
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 5, position: 0))
+    assert {:ok, _} = Game.handle_action(pid, Action.call(amount: 10, position: 1))
+
+    Game.state(pid) |> assert_min_bet(20)
+  end
 end

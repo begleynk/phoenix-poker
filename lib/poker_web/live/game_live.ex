@@ -38,7 +38,29 @@ defmodule PokerWeb.GameLive do
         <% :check -> %>
           <button phx-click="check">Check</button>
         <% :bet -> %>
-          <button value="bet">Bet</button>
+          <script>
+          function updateBetAmount(val) {
+            document.getElementById("bet-amount").value = val;
+            document.getElementById("bet-amount").innerText = "<%= if Game.State.highest_bet(@game) > 0, do: "Raise", else: "Bet" %>" + val
+          }
+          </script>
+          <button id="bet-amount" phx-click="bet" value="<%= Game.State.min_bet(@game) %>">
+          <%= if Game.State.highest_bet(@game) > 0 do
+                "Raise #{Game.State.min_bet(@game)}"
+              else
+                "Bet #{Game.State.min_bet(@game)}"
+              end %>
+          </button>
+          <input
+            type="range"
+            id='bet-amount-selector'
+            min="<%= Game.State.min_bet(@game) %>"
+            max="<%= Enum.at(@game.players, @game.position).chips %>"
+            value="<%= Game.State.highest_bet(@game) * 2 %>"
+            step="25"
+            onchange="updateBetAmount(this.value)"
+            oninput="updateBetAmount(this.value)"
+          />
       <% end %>
     <% end %>
     """
