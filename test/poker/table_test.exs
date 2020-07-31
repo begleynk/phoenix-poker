@@ -5,22 +5,38 @@ defmodule Poker.TableTest do
   alias Poker.Game
   alias Poker.Game.Action
 
+  test "it can be started and reloaded" do
+    name = "table_persistence"
+    {:ok, record} = Poker.Table.create_record(%{name: name})
+    {:ok, pid} = Poker.Table.start(record)
+    id = Poker.Table.state(pid).id
+
+    true = Process.exit(pid, :kill)
+
+    assert Poker.Table.whereis(name) == :undefined
+
+    new_pid = Poker.Table.find(name)
+
+    assert Poker.Table.state(new_pid).id == id
+    assert Poker.Table.state(new_pid).name == name
+  end
+
   test "it has a name" do
     name = "the name"
-    {:ok, pid} = Poker.Table.start_link(%{name: name})
+    {:ok, pid} = Poker.Table.create(%{name: name})
 
     assert Poker.Table.name(pid) == name
   end
 
   test "it has 6 seats" do
     name = "the name"
-    {:ok, pid} = Poker.Table.start_link(%{name: name})
+    {:ok, pid} = Poker.Table.create(%{name: name})
     assert Poker.Table.seats(pid) == [nil, nil, nil, nil, nil, nil]
   end
 
   test "it can give a copy of its state" do
     name = "the name"
-    {:ok, pid} = Poker.Table.start_link(%{name: name})
+    {:ok, pid} = Poker.Table.create(%{name: name})
 
     state = Poker.Table.state(pid)
 
@@ -34,7 +50,7 @@ defmodule Poker.TableTest do
     table_name = "the_table"
     {:ok, user} = Account.create_user(%{name: "Joe"})
     user_id = user.id
-    {:ok, pid} = Poker.Table.start_link(%{name: table_name})
+    {:ok, pid} = Poker.Table.create(%{name: table_name})
 
     assert :ok = Poker.Table.sit(pid, user, index: 0, amount: 1000)
 
@@ -44,7 +60,7 @@ defmodule Poker.TableTest do
 
   test "a user can leave the table and recover their balance" do
     {:ok, user} = Account.create_user(%{name: "Joe"})
-    {:ok, pid} = Poker.Table.start_link(%{name: "the_table"})
+    {:ok, pid} = Poker.Table.create(%{name: "the_table"})
 
     assert :ok = Poker.Table.sit(pid, user, index: 0, amount: 1000)
     assert :ok = Poker.Table.leave(pid, user)
@@ -54,7 +70,7 @@ defmodule Poker.TableTest do
 
   test "a user cannot sit at a table if they are already sitting" do
     {:ok, user} = Account.create_user(%{name: "Joe"})
-    {:ok, pid} = Poker.Table.start_link(%{name: "the_table"})
+    {:ok, pid} = Poker.Table.create(%{name: "the_table"})
 
     assert :ok = Poker.Table.sit(pid, user, index: 0, amount: 1000)
     assert {:error, "already seated"} = Poker.Table.sit(pid, user, index: 1, amount: 1000)
@@ -62,7 +78,7 @@ defmodule Poker.TableTest do
 
   test "a user cannot buy in for more than their account balance" do
     {:ok, user} = Account.create_user(%{name: "Joe", chips: 900})
-    {:ok, pid} = Poker.Table.start_link(%{name: "the_table"})
+    {:ok, pid} = Poker.Table.create(%{name: "the_table"})
 
     assert {:error, "not enough chips"} = Poker.Table.sit(pid, user, index: 1, amount: 1000)
   end
@@ -71,7 +87,7 @@ defmodule Poker.TableTest do
     {:ok, user1} = Account.create_user(%{name: "Bob"})
     {:ok, user2} = Account.create_user(%{name: "Alice"})
 
-    {:ok, pid} = Poker.Table.start_link(%{name: "the_table"})
+    {:ok, pid} = Poker.Table.create(%{name: "the_table"})
     Poker.Table.subscribe(pid)
 
     assert :ok = Poker.Table.sit(pid, user1, index: 1, amount: 1000)
@@ -88,7 +104,7 @@ defmodule Poker.TableTest do
     {:ok, user2} = Account.create_user(%{name: "Alice"})
     {:ok, user3} = Account.create_user(%{name: "Jane"})
 
-    {:ok, pid} = Poker.Table.start_link(%{name: "the_table"})
+    {:ok, pid} = Poker.Table.create(%{name: "the_table"})
     :ok = Poker.Table.disable_auto_start(pid)
     :ok = Poker.Table.set_button(pid, 1) # This willl advance by one when the game starts
 
@@ -113,7 +129,7 @@ defmodule Poker.TableTest do
     {:ok, user2} = Account.create_user(%{name: "Alice"})
     {:ok, user3} = Account.create_user(%{name: "Jane"})
 
-    {:ok, pid} = Poker.Table.start_link(%{name: "reconciliation_table"})
+    {:ok, pid} = Poker.Table.create(%{name: "reconciliation_table"})
     :ok = Poker.Table.disable_auto_start(pid)
     :ok = Poker.Table.set_button(pid, 2)
 

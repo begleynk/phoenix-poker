@@ -2,36 +2,69 @@ defmodule Poker.Table do
   use GenServer
   use Ecto.Schema
 
-  import Ecto.Changeset
-
   alias Poker.Account
   alias Poker.Game
   alias Poker.GameSupervisor
+  alias Poker.GamePersistence
+  alias Poker.GamePersistence.TableRecord
   alias Poker.Account.User
 
-  embedded_schema do
-    field :name, :string
-    field :seats, :map, default: [nil, nil, nil, nil, nil, nil]
-    field :current_game, :string
-    field :button, :integer, default: 0
-    field :auto_start, :boolean, default: true
+  defstruct [
+    :id,
+    :name,
+    :current_game,
+    seats: [nil, nil, nil, nil, nil, nil],
+    button: 0,
+    auto_start: true,
+  ]
+
+  def start(%TableRecord{} = record) do
+    GenServer.start(
+      __MODULE__,
+      from_record(record),
+      name: {:global, {:table, record.name}}
+    )
   end
 
-  def changeset(table, params \\ %{}) do
-    table
-    |> cast(params, [:name])
-    |> validate_required([:name])
-    |> validate_length(:name, min: 4)
+  def start_link(%TableRecord{} = record) do
+    GenServer.start_link(
+      __MODULE__,
+      from_record(record),
+      name: {:global, {:table, record.name}}
+    )
   end
 
-  def start_link(params) do
-    case %Poker.Table{} |> changeset(params) |> apply_action(:update) do
-      {:ok, table} ->
-        GenServer.start_link(__MODULE__, table, name: {:global, {:table, table.name}})
+  def create(%{} = params) do
+    with {:ok, record} <- create_record(params),
+         {:ok, pid}    <- start_link(record)
+      do
+        {:ok, pid}
+      else
+        {:error, error} -> {:error, error}
+      end
+  end
 
-      {:error, changeset} ->
-        {:error, changeset}
+  def find(name) do
+    case GamePersistence.get_table_record_by_name(name) do
+      nil -> nil
+      %TableRecord{} = record->
+        case start_link(record) do
+          {:ok, pid} -> pid
+          error -> error
+        end
     end
+  end
+
+  def create_record(%{} = params) do
+    GamePersistence.create_table_record(params)
+  end
+
+  defp from_record(%TableRecord{} = record) do
+    %Poker.Table {
+      id: record.id,
+      name: record.name,
+      button: record.button,
+    }
   end
 
   @impl true

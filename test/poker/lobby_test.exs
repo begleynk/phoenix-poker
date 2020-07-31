@@ -1,5 +1,6 @@
 defmodule Poker.LobbyTest do
   use ExUnit.Case
+  use Poker.DataCase
 
   test "can be used to start tables" do
     assert {:ok, pid} = Poker.Lobby.create_table("my table")

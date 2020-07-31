@@ -19,7 +19,7 @@ defmodule PokerWeb.LobbyLiveTest do
     {:ok, view, _html} = live(conn)
 
     view
-    |> form("#create_table", table: %{name: "New Table"})
+    |> form("#create_table", table_record: %{name: "New Table"})
     |> render_submit()
 
     assert render(view) =~ "New Table"
@@ -33,7 +33,7 @@ defmodule PokerWeb.LobbyLiveTest do
     {:ok, view, _html} = live(conn)
 
     view
-    |> form("#create_table", table: %{name: "AA"})
+    |> form("#create_table", table_record: %{name: "AA"})
     |> render_submit()
 
     assert render(view) =~ "should be at least"

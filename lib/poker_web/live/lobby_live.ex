@@ -3,6 +3,7 @@ defmodule PokerWeb.LobbyLive do
 
   alias Poker.Account
   alias Poker.Table
+  alias Poker.GamePersistence.TableRecord
 
   @impl true
   def mount(_params, %{"user_id" => id}, socket) do
@@ -13,7 +14,7 @@ defmodule PokerWeb.LobbyLive do
       |> assign(user: Account.get_user!(id))
       |> assign(tables: Poker.Lobby.table_states())
       |> assign(table_name: "")
-      |> assign(changeset: Table.changeset(%Table{}))
+      |> assign(changeset: TableRecord.changeset(%TableRecord{}))
 
     {:ok, socket}
   end
@@ -44,7 +45,7 @@ defmodule PokerWeb.LobbyLive do
   end
 
   @impl true
-  def handle_event("create_table", %{"table" => params}, socket) do
+  def handle_event("create_table", %{"table_record" => params}, socket) do
     case Poker.Lobby.create_table(params["name"]) do
       {:ok, _} -> {:noreply, socket |> put_flash(:info, "Table created")}
       {:error, changeset} -> {:noreply, socket |> assign(:changeset, changeset)}

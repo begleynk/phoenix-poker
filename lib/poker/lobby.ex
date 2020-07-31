@@ -1,45 +1,60 @@
 defmodule Poker.Lobby do
-  use DynamicSupervisor
+  use GenServer
 
+  alias Poker.Lobby
   alias Poker.Table
+  alias Poker.TableSupervisor
+  alias Poker.GamePersistence
+  alias Poker.GamePersistence.TableRecord
 
   def start_link(_args) do
-    DynamicSupervisor.start_link(__MODULE__, [], name: __MODULE__)
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   def start_link() do
-    Poker.Lobby.start_link([])
+    Lobby.start_link([])
   end
 
   @impl true
   def init(_args) do
-    DynamicSupervisor.init(strategy: :one_for_one)
+    GenServer.cast(__MODULE__, :start_tables)
+    {:ok, nil}
   end
 
   def subscribe do
     Phoenix.PubSub.subscribe(Poker.PubSub, "tables")
   end
 
-  # TODO: Error handling?
   def create_table(name) do
-    spec = %{id: Table, start: {Table, :start_link, [%{name: name}]}, restart: :transient}
-
-    case DynamicSupervisor.start_child(__MODULE__, spec) do
-      {:ok, pid} ->
-        :ok = Phoenix.PubSub.broadcast(Poker.PubSub, "tables", {:created, Table.state(pid)})
-        {:ok, pid}
-
-      error ->
-        error
+    case GamePersistence.create_table_record(%{name: name}) do
+      {:ok, record} -> start_table(record) |> broadcast
+      error -> error
     end
   end
 
+  def start_table(%TableRecord{} = record) do
+    TableSupervisor.start_table(record)
+  end
+
   def tables do
-    DynamicSupervisor.which_children(__MODULE__)
-    |> Enum.map(fn {_, pid, _, _} -> pid end)
+    TableSupervisor.table_pids |> Enum.map(fn {_, pid, _, _} -> pid end)
   end
 
   def table_states do
-    Poker.Lobby.tables() |> Enum.map(fn p -> Poker.Table.state(p) end)
+    Lobby.tables() |> Enum.map(fn p -> Table.state(p) end)
   end
+
+  @impl true
+  def handle_cast(:start_tables, state) do
+    GamePersistence.list_table_records()
+    |> Enum.each(&(start_table(&1)))
+
+    {:noreply, state}
+  end
+
+  defp broadcast({:ok, pid}) do
+    :ok = Phoenix.PubSub.broadcast(Poker.PubSub, "tables", {:created, Table.state(pid)})
+    {:ok, pid}
+  end
+  defp broadcast(error), do: error
 end
