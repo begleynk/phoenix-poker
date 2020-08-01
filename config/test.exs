@@ -1,5 +1,8 @@
 use Mix.Config
 
+config :poker,
+  delay_before_new_game_secs: 0
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used

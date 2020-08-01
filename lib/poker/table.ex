@@ -211,6 +211,11 @@ defmodule Poker.Table do
     end
   end
 
+  def handle_info(:schedule_new_game, state) do
+    start_game(self()) # Schedule a new game
+    {:noreply, state}
+  end
+
   @impl true
   def handle_info({:game_state, %Game.State{id: game_id, phase: :done} = game_state}, %{current_game: game_id} = state) do
     # Resolve chips
@@ -218,8 +223,31 @@ defmodule Poker.Table do
   end
 
   @impl true
+  def handle_info({:game_complete, %Game.State{} = game_state}, %{current_game: game_id} = state) do
+    Game.whereis(game_id) |> Game.unsubscribe
+
+    state =
+      state
+      |> update_chip_counts(game_state)
+      |> Map.put(:current_game, nil)
+      |> schedule_next_game
+
+    {:noreply, state}
+  end
+
+  @impl true
   def handle_info({:game_state, _}, state) do
     {:noreply, state}
+  end
+
+  def schedule_next_game(state) do
+    Process.send_after(
+      self(),
+      :schedule_new_game,
+      Application.get_env(:poker, :delay_before_new_game_secs) * 1000
+    )
+
+    state
   end
 
   def presence_topic(state) do

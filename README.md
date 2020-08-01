@@ -15,7 +15,7 @@ Still a work in progress.
 * [x] Proof of concept game UI
   * [x] PubSub broadcast of game state changes
   * [ ] Hook up Phoenix presence to detect user disconnects
-* [ ] Fully implement games flowing from game to game
+* [x] Fully implement games flowing from game to game
 * [ ] UI Improvements
   * [ ] Show active bets on table
   * [ ] Move to SVG/CSS/Image cards, because some browsers/fonts don't support Unicode cards

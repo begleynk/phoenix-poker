@@ -5,6 +5,8 @@ defmodule PokerWeb.TableLiveTest do
   import Phoenix.LiveViewTest
 
   alias Poker.Table
+  alias Poker.Game
+  alias Poker.Game.Action
   alias Poker.Lobby
   alias Poker.Account
 
@@ -104,5 +106,34 @@ defmodule PokerWeb.TableLiveTest do
         }
       }
     }
+  end
+
+  @tag login_as: "Phil"
+  @tag players: [{"Phil", 1000}, {"Jane", 1000}]
+  test "starts a new game when one game ends", %{conn: conn, user: user1, players: players} do
+    user2 = Account.get_user!(Enum.at(players, 1).user_id)
+
+    {:ok, table} = Lobby.create_table("table_live_test5")
+
+    assert :ok = Table.sit(table, user1, index: 0, amount: 1000)
+    assert :ok = Table.sit(table, user2, index: 1, amount: 1000)
+
+    state = Table.state(table)
+    first_game = state.current_game
+    game_pid = Game.whereis(first_game)
+    Game.subscribe(game_pid)
+
+    {:ok, view, html} = live(conn, Routes.table_path(conn, :show, "table_live_test5"))
+
+    assert html =~ "Current Game: " <> first_game
+
+    assert {:ok, _} = Game.handle_action(game_pid, Action.call(amount: 5, position: 0))
+    assert {:ok, _} = Game.handle_action(game_pid, Action.call(amount: 10, position: 1))
+    assert {:ok, _} = Game.handle_action(game_pid, Action.fold(position: 0))
+
+    assert_receive {:game_complete, %Game.State{id: ^first_game}}, 400
+
+    assert render(view) =~ "Current Game: " <> Table.state(table).current_game
+    refute render(view) =~ "Current Game: " <> first_game
   end
 end

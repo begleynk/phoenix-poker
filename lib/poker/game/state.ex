@@ -254,7 +254,16 @@ defmodule Poker.Game.State do
   end
 
   defp broadcast(state) do
-    Phoenix.PubSub.broadcast(Poker.PubSub, "game_" <> state.id, {:game_state, state})
+    case state.phase do
+      :done -> broadcast_complete(state)
+      other -> 
+        Phoenix.PubSub.broadcast(Poker.PubSub, "game_" <> state.id, {:game_state, state})
+        state
+    end
+  end
+
+  defp broadcast_complete(state) do
+    Phoenix.PubSub.broadcast(Poker.PubSub, "game_" <> state.id, {:game_complete, state})
     state
   end
 end

@@ -53,10 +53,14 @@ defmodule Poker.Game.Phase.Preflop do
   end
 
   defp move_to_flop_if_ready(state) do
-    if State.all_players_have_acted?(state) do
-      state |> Phase.Flop.init
+    if State.all_but_one_folded?(state) do
+      state |> Phase.Done.init
     else
-      state
+      if State.all_players_have_acted?(state) do
+        state |> Phase.Flop.init
+      else
+        state
+      end
     end
   end
 end

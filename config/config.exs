@@ -8,7 +8,8 @@
 use Mix.Config
 
 config :poker,
-  ecto_repos: [Poker.Repo]
+  ecto_repos: [Poker.Repo],
+  delay_before_new_game_secs: 5
 
 # Configures the endpoint
 config :poker, PokerWeb.Endpoint,

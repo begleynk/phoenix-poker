@@ -180,6 +180,11 @@ defmodule PokerWeb.TableLive do
     {:noreply, socket |> assign(:current_game, new_game_state)}
   end
 
+  @impl true
+  def handle_info({:game_complete, new_game_state}, socket) do
+    {:noreply, socket |> assign(:current_game, new_game_state)}
+  end
+
   @doc """
   This function gets invoked when a change has been detected in the player
   presence information by Phoenix Presence.
