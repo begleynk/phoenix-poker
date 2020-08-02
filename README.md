@@ -27,6 +27,7 @@ Still a work in progress.
 * [ ] Action Timers - timeout inactive users
 * [ ] All-In handling
 * [ ] Split pots
+* [ ] Bug: Properly handle players joining while a game is running
 
 ## Future features
 
