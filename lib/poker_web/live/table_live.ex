@@ -46,7 +46,8 @@ defmodule PokerWeb.TableLive do
             seat: sitting_player(@current_game.players, i),
             user_seated: current_user_sitting?(@this.seats, @user),
             can_leave: false,
-            active_turn: action_on_player?(@current_game, i)
+            active_turn: action_on_player?(@current_game, i),
+            is_button: is_button?(@current_game, i)
           )
           %>
         <% end %>
@@ -70,7 +71,8 @@ defmodule PokerWeb.TableLive do
             is_current_user: seat != nil && seat.user_id == @user.id,
             user_seated: current_user_sitting?(@this.seats, @user),
             can_leave: true,
-            active_turn: false
+            active_turn: false,
+            is_button: is_button?(@current_game, i)
           )
           %>
         <% end %>
@@ -253,5 +255,9 @@ defmodule PokerWeb.TableLive do
       nil -> false
       %{seat: seat} -> seat == seat_index
     end
+  end
+
+  def is_button?(game, seat_index) do
+    Enum.find_index(game.players, &(&1.seat == seat_index)) == length(game.players) - 1
   end
 end

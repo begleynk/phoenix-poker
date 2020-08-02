@@ -29,6 +29,10 @@ defmodule PokerWeb.SeatLive do
       <% else %>
         <h1><%= Card.render_hidden %><%= Card.render_hidden %></h1>
       <% end %>
+
+      <%= if @is_button do %>
+        <span class="poker-button">B</span>
+      <% end %>
     </div>
     """
   end
@@ -39,6 +43,10 @@ defmodule PokerWeb.SeatLive do
       <h3><%= @seat.name %>, <%= @seat.chips %> chips</h3>
       <%= if @can_leave do %>
         <button phx-click='leave' value='<%= @id %>'>Leave</button>
+      <% end %>
+
+      <%= if @is_button do %>
+        <span class="poker-button">B</span>
       <% end %>
     </div>
     """

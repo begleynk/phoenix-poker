@@ -24,27 +24,63 @@
   text-align: center;
 }
 
+.poker-button {
+  border-radius: 50%;
+  border: 3px solid black;
+  background: #E8E8E8;
+  width: 40px;
+  height: 40px;
+  display: inline-block;
+  font-size: 1.4em;
+  text-align: center;
+  line-height: 190%;
+}
+
 .table .seat.active-turn {
   border: 5px solid orange;
 }
 
 .table .seat:nth-child(1) {
   transform: translate(0px);
+
+  .poker-button {
+    transform: translate(100px);
+  }
 }
 .table .seat:nth-child(2) {
   transform: translate(390px, -100px);
+
+  .poker-button {
+    transform: translate(0px, 100px);
+  }
 }
 .table .seat:nth-child(3) {
   transform: translate(780px, 0px);
+
+  .poker-button {
+    transform: translate(-100px, 100px);
+  }
 }
 .table .seat:nth-child(4) {
   transform: translate(780px, 400px);
+
+  .poker-button {
+    transform: translate(-100px, -200px);
+  }
 }
 .table .seat:nth-child(5) {
   transform: translate(390px, 520px);
+
+  .poker-button {
+    transform: translate(0px, -130px);
+  }
 }
 .table .seat:nth-child(6) {
   transform: translate(0px, 400px);
+
+  .poker-button {
+    transform: translate(100px, -130px);
+  }
 }
 
 .table .game {
